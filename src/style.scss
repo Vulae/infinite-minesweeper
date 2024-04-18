@@ -1,0 +1,19 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+@font-face {
+    font-family: 'Caveat';
+    src: url("https://fonts.gstatic.com/s/caveat/v18/Wnz6HAc5bAfYB2Q7ZjYY.woff2");
+}
+
+
+
+body {
+    @apply bg-zinc-900 min-h-screen;
+}
+
+
