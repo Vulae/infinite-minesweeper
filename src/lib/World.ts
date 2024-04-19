@@ -108,7 +108,6 @@ export class World {
         for(const { x, y } of spiralIter(offsetX, offsetY)) {
             const tile = this.getTile(x, y);
             if(tile.mines() == 0 && tile.nearby() == 0) {
-                console.log(tile);
                 this.reveal(tile.x, tile.y);
                 break;
             }

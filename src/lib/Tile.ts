@@ -1,3 +1,4 @@
+import { tileset, tilesetNumberTexture } from "./Assets";
 import type { World } from "./World";
 
 
@@ -69,19 +70,16 @@ export class VanillaTile extends Tile {
 
     public render(ctx: CanvasRenderingContext2D): void {
         if(this.state == 'covered') {
-            ctx.fillStyle = 'gray';
-            ctx.fillRect(0, 0, 1, 1);
+            tileset.draw(ctx, 'tile_covered', 0, 0, 1, 1);
         } else if(this.state == 'flagged') {
-            ctx.fillStyle = 'green';
-            ctx.fillRect(0, 0, 1, 1);
-        } else {
+            tileset.draw(ctx, 'tile_covered', 0, 0, 1, 1);
+            tileset.draw(ctx, 'flag', 0, 0, 1, 1);
+        } else if(this.state == 'revealed') {
+            tileset.draw(ctx, 'tile_revealed', 0, 0, 1, 1);
             if(this.isMine) {
-                ctx.fillStyle = 'red';
-                ctx.fillRect(0, 0, 1, 1);
+                tileset.draw(ctx, 'bomb', 0, 0, 1, 1);
             } else {
-                ctx.fillStyle = 'orange';
-                ctx.font = '1px segoe';
-                ctx.fillText(`${this.nearby()}`, 0, 1);
+                tileset.draw(ctx, tilesetNumberTexture(this.nearby()), 0, 0, 1, 1);
             }
         }
     }

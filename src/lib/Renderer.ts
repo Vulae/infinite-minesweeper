@@ -81,6 +81,10 @@ export class WorldRenderer {
 
 
     private renderWorld(): void {
+        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.scale(this.cameraZoom, this.cameraZoom);
+        this.ctx.translate(-this.cameraX, -this.cameraY);
+
         const bounds = this.cameraBounds(1);
         for(let x = bounds.minX; x < bounds.maxX; x++) {
             for(let y = bounds.minY; y < bounds.maxY; y++) {
@@ -88,7 +92,7 @@ export class WorldRenderer {
                 this.ctx.translate(x, y);
                 // We need to oversize each tile to prevent gaps between tiles due to fp precision loss.
                 // TODO: Dynamically set this based on cameraZoom
-                this.ctx.scale(1.03, 1.03);
+                this.ctx.scale(1.01, 1.01);
 
                 const tile = this.world.getTile(x, y);
                 tile.render(this.ctx);
@@ -96,6 +100,7 @@ export class WorldRenderer {
                 this.ctx.restore();
             }
         }
+        this.ctx.imageSmoothingEnabled = true;
     }
 
     public render(): void {
@@ -104,8 +109,6 @@ export class WorldRenderer {
         this.ctx.fillStyle = 'purple';
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.ctx.scale(this.cameraZoom, this.cameraZoom);
-        this.ctx.translate(-this.cameraX, -this.cameraY);
         this.renderWorld();
     }
 }

@@ -1,11 +1,12 @@
 
 * [ ] Actual README.md
 
-* [ ] Custom visuals
+* [X] Custom visuals
 * [ ] Favicon
 
 * [ ] Extreme zoom out
     * (Zoom out very far, stop rendering individual tiles and just render biome colors)
+* [ ] Click on revealed tile to auto-reveal neighbors
 
 * [ ] Add save/load system
 
