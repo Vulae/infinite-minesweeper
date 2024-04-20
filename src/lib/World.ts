@@ -70,11 +70,25 @@ export class World {
         return this.getTile(x, y).flag();
     }
 
-    public reveal(x: number, y: number): boolean {
+    public reveal(x: number, y: number, userClick: boolean = true): boolean {
         const tile = this.getTile(x, y);
-        const loss = tile.reveal();
-        if(loss) return true;
-        if(tile.nearby() > 0) return false;
+        tile.reveal();
+        if(tile.numMines() > 0) return true;
+        if(tile.minesNearby() > 0) {
+            if(userClick) {
+                let death = false;
+                if(tile.flagsNearby() == tile.minesNearby()) {
+                    for(const offset of tile.searchPattern) {
+                        if(this.reveal(tile.x + offset.x, tile.y + offset.y, false)) {
+                            death = true;
+                        }
+                    }
+                }
+                return death;
+            } else {
+                return false;
+            }
+        }
 
         let reveal: Tile[] = [ ];
         let stack: Tile[] = [ tile ];
@@ -83,13 +97,13 @@ export class World {
             const tile = stack.pop()!;
             reveal.push(tile);
 
-            for(const offset of tile.pattern) {
+            for(const offset of tile.searchPattern) {
                 const nTile = this.getTile(tile.x + offset.x, tile.y + offset.y);
                 if(
                     stack.some(t => t.x == nTile.x && t.y == nTile.y) ||
                     reveal.some(t => t.x == nTile.x && t.y == nTile.y)
                 ) continue;
-                if(nTile.nearby() == 0) {
+                if(nTile.minesNearby() == 0) {
                     stack.push(nTile);
                 } else {
                     reveal.push(nTile);
@@ -107,7 +121,7 @@ export class World {
     public revealClosest0(offsetX: number, offsetY: number): void {
         for(const { x, y } of spiralIter(offsetX, offsetY)) {
             const tile = this.getTile(x, y);
-            if(tile.mines() == 0 && tile.nearby() == 0) {
+            if(tile.numMines() == 0 && tile.minesNearby() == 0) {
                 this.reveal(tile.x, tile.y);
                 break;
             }
