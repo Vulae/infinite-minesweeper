@@ -1,8 +1,9 @@
 
 import { Chunk, type GeneratedChunk } from "./Chunk";
 import { CHUNK_SIZE } from "./Constants";
-import type { WorldRNG } from "./RNG";
-import { ChocolateTile, VanillaTile, type Tile } from "./Tile";
+import { generateTile } from "./Generator";
+import { splitmix32 } from "./RNG";
+import { type Tile } from "./Tile";
 
 
 
@@ -31,20 +32,23 @@ function* spiralIter(offsetX: number, offsetY: number): Generator<{ x: number, y
 type ChunkCoordinate = `${number},${number}`;
 
 export class World {
-    public readonly rng: WorldRNG;
+    public readonly seed: number;
+    public readonly tileSeed: number;
+    public readonly biomeSeed: number;
+    public readonly chocolateSeed: number;
 
-    constructor(rng: WorldRNG) {
-        this.rng = rng;
+    constructor(seed: number) {
+        this.seed = seed;
+        const rng = splitmix32(this.seed, false);
+        this.tileSeed = rng();
+        this.biomeSeed = rng();
+        this.chocolateSeed = rng();
     }
 
     private loadedChunks: {[key: ChunkCoordinate]: GeneratedChunk} = {};
 
     public generateTile(x: number, y: number): Tile {
-        if(this.rng.tileRNG(Math.floor(x / 16), Math.floor(y / 16), -1) <= 0.5) {
-            return new VanillaTile(this, x, y);
-        } else {
-            return new ChocolateTile(this, x, y);
-        }
+        return generateTile(this, x, y);
     }
 
     public getChunk(chunkX: number, chunkY: number): Chunk {

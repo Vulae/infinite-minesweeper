@@ -1,10 +1,8 @@
 
-import { VanillaTile, type Tile } from "./Tile";
-
 
 
 // https://stackoverflow.com/questions/521295#answer-47593316
-function splitmix32(a: number, normalRange: boolean): () => number {
+export function splitmix32(a: number, normalRange: boolean): () => number {
     return (): number => {
         a |= 0;
         a = a + 0x9E3779B9 | 0;
@@ -19,7 +17,10 @@ function splitmix32(a: number, normalRange: boolean): () => number {
 
 // https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
 // I have no clue how this works, but it seems to be what I need?
-function sfc_hash(seed: number, x: number, y: number, z: number): number {
+/**
+ * @returns Hash value between -1 and 1
+ */
+export function sfc_hash(seed: number, x: number, y: number, z: number): number {
     const a = 0x80AA1723;
     const b = 0xC6B272FD;
   
@@ -41,21 +42,48 @@ function sfc_hash(seed: number, x: number, y: number, z: number): number {
     return (seed >>> 0) / 0xFFFFFFFF;
 }
 
+function weightIndex(weights: number[], value: number): number {
+    value *= weights.reduce((total, weight) => total + weight, 0);
+    for(let i = 0; i < weights.length; i++) {
+        value -= weights[i];
+        if(value <= 0) {
+            return i;
+        }
+    }
+    throw new Error('Invalid weights');
+}
 
-
-export class WorldRNG {
-    public readonly seed: number;
-    private readonly seedTile: number;
-
-    public constructor(seed: number) {
-        this.seed = seed;
-        const rng = splitmix32(this.seed, false);
-        this.seedTile = rng();
+/**
+ * @returns Weight index
+ */
+export function voronoi_noise2d(seed: number, x: number, y: number, weights: number[]): number {
+    let points: { x: number, y: number, type: number }[] = [];
+    for(let i = Math.floor(x) - 1; i < Math.ceil(x) + 1; i++) {
+        for(let j = Math.floor(y) - 1; j < Math.ceil(y) + 1; j++) {
+            points.push({
+                x: i + sfc_hash(seed, i, j, 0) - 0.5,
+                y: j + sfc_hash(seed, i, j, 1) - 0.5,
+                type: weightIndex(weights, sfc_hash(seed, i, j, 2))
+            });
+        }
     }
 
-    public tileRNG(x: number, y: number, index: number): number {
-        return sfc_hash(this.seedTile, x, y, index);
+    let closestDist = Infinity;
+    let closestType = -1;
+
+    for(const point of points) {
+        const dist = Math.sqrt((point.x - x)**2 + (point.y - y)**2);
+        if(dist < closestDist) {
+            closestDist = dist;
+            closestType = point.type;
+        }
     }
+
+    if(closestType == -1) {
+        throw new Error('Voronoi noise error.');
+    }
+
+    return closestType;
 }
 
 

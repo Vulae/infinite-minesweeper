@@ -1,5 +1,6 @@
 
 import { tileset, tilesetNumberTexture } from "./Assets";
+import { sfc_hash } from "./RNG";
 import type { World } from "./World";
 
 
@@ -77,7 +78,7 @@ export class VanillaTile extends Tile {
 
     public constructor(world: World, x: number, y: number) {
         super(world, x, y);
-        this._numMines = (this.world.rng.tileRNG(this.x, this.y, 0) > 0.875) ? 1 : 0;
+        this._numMines = (sfc_hash(this.world.tileSeed, this.x, this.y, 0) > 0.875) ? 1 : 0;
     }
 
     public render(ctx: CanvasRenderingContext2D): void {
@@ -129,7 +130,7 @@ export class ChocolateTile extends VanillaTile {
     
     public constructor(world: World, x: number, y: number) {
         super(world, x, y);
-        this._numMines = (this.world.rng.tileRNG(this.x, this.y, 0) > 0.6) ? 1 : 0;
+        this._numMines = (sfc_hash(this.world.tileSeed, this.x, this.y, 0) > 0.6) ? 1 : 0;
     }
 
     public render(ctx: CanvasRenderingContext2D): void {

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { WorldRNG } from "$lib/RNG";
     import { WorldRenderer } from "$lib/Renderer";
     import { World } from "$lib/World";
     import { resize } from "$lib/actions/Resize";
@@ -31,7 +30,7 @@
 
     onMount(() => {
         const seed = parseInt(new URL(location.href).searchParams.get('seed') ?? '0');
-        world = new World(new WorldRNG(seed));
+        world = new World(seed);
         const closest0 = world.closest0(0, 0);
         world.reveal(closest0.x, closest0.y);
         renderer = new WorldRenderer(world, canvas);
