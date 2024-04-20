@@ -70,26 +70,26 @@ export abstract class Tile {
 
 
 export class VanillaTile extends Tile {
-    private readonly _numMines: number;
-    private _revealed: boolean = false;
-    private _numFlags: number = 0;
-    private readonly _numFlagsMax: number = 1;
+    protected readonly _numMines: number;
+    protected _revealed: boolean = false;
+    protected _numFlags: number = 0;
+    protected readonly _numFlagsMax: number = 1;
 
     public constructor(world: World, x: number, y: number) {
         super(world, x, y);
-        this._numMines = (this.world.rng.tileRNG(this.x, this.y, 0) > 0.7) ? 1 : 0;
+        this._numMines = (this.world.rng.tileRNG(this.x, this.y, 0) > 0.875) ? 1 : 0;
     }
 
     public render(ctx: CanvasRenderingContext2D): void {
         if(this._revealed) {
-            tileset.draw(ctx, 'tile_revealed', 0, 0, 1, 1);
+            tileset.draw(ctx, 'vanilla_tile_revealed', 0, 0, 1, 1);
             if(this._numMines > 0) {
                 tileset.draw(ctx, 'bomb', 0, 0, 1, 1);
             } else {
                 tileset.draw(ctx, tilesetNumberTexture(this.minesNearby()), 0, 0, 1, 1);
             }
         } else {
-            tileset.draw(ctx, 'tile_covered', 0, 0, 1, 1);
+            tileset.draw(ctx, 'vanilla_tile_covered', 0, 0, 1, 1);
             if(this._numFlags > 0) {
                 tileset.draw(ctx, 'flag', 0, 0, 1, 1);
             }
@@ -124,4 +124,27 @@ export class VanillaTile extends Tile {
     }
 }
 
+export class ChocolateTile extends VanillaTile {
+    protected readonly _numMines: number;
+    
+    public constructor(world: World, x: number, y: number) {
+        super(world, x, y);
+        this._numMines = (this.world.rng.tileRNG(this.x, this.y, 0) > 0.6) ? 1 : 0;
+    }
 
+    public render(ctx: CanvasRenderingContext2D): void {
+        if(this._revealed) {
+            tileset.draw(ctx, 'chocolate_tile_revealed', 0, 0, 1, 1);
+            if(this._numMines > 0) {
+                tileset.draw(ctx, 'bomb', 0, 0, 1, 1);
+            } else {
+                tileset.draw(ctx, tilesetNumberTexture(this.minesNearby()), 0, 0, 1, 1);
+            }
+        } else {
+            tileset.draw(ctx, 'chocolate_tile_covered', 0, 0, 1, 1);
+            if(this._numFlags > 0) {
+                tileset.draw(ctx, 'flag', 0, 0, 1, 1);
+            }
+        }
+    }
+}

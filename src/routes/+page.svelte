@@ -24,8 +24,10 @@
     let selTile: { x: number, y: number } | null = null;
 
     onMount(() => {
-        world = new World(new WorldRNG(0));
-        world.revealClosest0(0, 0);
+        const seed = parseInt(new URL(location.href).searchParams.get('seed') ?? '0');
+        world = new World(new WorldRNG(seed));
+        const closest0 = world.closest0(0, 0);
+        world.reveal(closest0.x, closest0.y);
         renderer = new WorldRenderer(world, canvas);
         setTimeout(() => {
             renderer.cameraTranslate(canvas.width / 2, canvas.height / 2);

@@ -2,7 +2,7 @@
 import { Chunk, type GeneratedChunk } from "./Chunk";
 import { CHUNK_SIZE } from "./Constants";
 import type { WorldRNG } from "./RNG";
-import { VanillaTile, type Tile } from "./Tile";
+import { ChocolateTile, VanillaTile, type Tile } from "./Tile";
 
 
 
@@ -40,7 +40,11 @@ export class World {
     private loadedChunks: {[key: ChunkCoordinate]: GeneratedChunk} = {};
 
     public generateTile(x: number, y: number): Tile {
-        return new VanillaTile(this, x, y);
+        if(this.rng.tileRNG(Math.floor(x / 16), Math.floor(y / 16), -1) <= 0.5) {
+            return new VanillaTile(this, x, y);
+        } else {
+            return new ChocolateTile(this, x, y);
+        }
     }
 
     public getChunk(chunkX: number, chunkY: number): Chunk {
@@ -118,14 +122,14 @@ export class World {
 
 
 
-    public revealClosest0(offsetX: number, offsetY: number): void {
+    public closest0(offsetX: number, offsetY: number): { x: number, y: number } {
         for(const { x, y } of spiralIter(offsetX, offsetY)) {
             const tile = this.getTile(x, y);
             if(tile.numMines() == 0 && tile.minesNearby() == 0) {
-                this.reveal(tile.x, tile.y);
-                break;
+                return { x, y };
             }
         }
+        throw new Error('This error should never happen, it\'s just here to make TypeScript happy.');
     }
 
 }

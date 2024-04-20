@@ -5,11 +5,9 @@ import { TextureAtlas } from "./Atlas";
 
 export const tileset = new TextureAtlas('/infinite-sweeper/tileset.png', {
     null: [ 0, 0, 16, 16 ],
-    tile_covered: [ 16, 0, 16, 16 ],
-    tile_revealed: [ 16, 16, 16, 16 ],
-    bomb: [ 32, 0, 16, 16 ],
-    explosion: [ 32, 16, 16, 16 ],
-    flag: [ 32, 32, 16, 16 ],
+    bomb: [ 16, 0, 16, 16 ],
+    explosion: [ 16, 16, 16, 16 ],
+    flag: [ 32, 16, 16, 16 ],
     number_0: [ 48, 0, 16, 16 ],
     number_1: [ 48, 16, 16, 16 ],
     number_2: [ 48, 32, 16, 16 ],
@@ -18,7 +16,11 @@ export const tileset = new TextureAtlas('/infinite-sweeper/tileset.png', {
     number_5: [ 48, 80, 16, 16 ],
     number_6: [ 48, 96, 16, 16 ],
     number_7: [ 48, 112, 16, 16 ],
-    number_8: [ 48, 128, 16, 16 ]
+    number_8: [ 48, 128, 16, 16 ],
+    vanilla_tile_covered: [ 64, 0, 16, 16 ],
+    vanilla_tile_revealed: [ 80, 0, 16, 16 ],
+    chocolate_tile_covered: [ 64, 16, 16, 16 ],
+    chocolate_tile_revealed: [ 80, 16, 16, 16 ]
 });
 
 export function tilesetNumberTexture(value: number) {
