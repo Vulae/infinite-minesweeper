@@ -35,7 +35,11 @@ export class WorldRenderer {
         this.cameraY -= y / this.cameraZoom;
     }
 
-    public cameraScale(scale: number): void {
+    /**
+     * Scale camera zoom
+     * @returns - New camera zoom
+     */
+    public cameraScale(scale: number): number {
         const lastCenterX = this.cameraX + this.cameraWidth() * 0.5;
         const lastCenterY = this.cameraY + this.cameraHeight() * 0.5;
 
@@ -58,6 +62,8 @@ export class WorldRenderer {
 
         this.cameraX -= centerX - lastCenterX;
         this.cameraY -= centerY - lastCenterY;
+
+        return this.cameraZoom;
     }
 
 

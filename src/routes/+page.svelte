@@ -5,6 +5,7 @@
     import { resize } from "$lib/actions/Resize";
     import { onDestroy, onMount } from "svelte";
     import { tileset } from "$lib/Assets";
+    import { CHUNK_SIZE } from "$lib/Constants";
 
     let canvas: HTMLCanvasElement;
     let world: World;
@@ -12,12 +13,17 @@
 
     let needsRerender: boolean = false;
     let animFrame: number = -1;
+    let numFrames: number = 0;
+    let frameTime: number | null = null;
     const render = () => {
         cancelAnimationFrame(animFrame);
         animFrame = requestAnimationFrame(render);
         if(needsRerender) {
             needsRerender = false;
+            numFrames++;
+            const start = performance.now();
             renderer.render();
+            frameTime = performance.now() - start;
         }
     }
 
@@ -87,9 +93,11 @@
             needsRerender = true;
         }}
         on:wheel|passive={ev => {
-            renderer.cameraScale(ev.deltaY > 0 ? 0.9 : 1.1);
-            selTile = renderer.cameraPos(ev.offsetX, ev.offsetY);
-            needsRerender = true;
+            const scale = ev.deltaY > 0 ? 0.9 : 1.1;
+            if(renderer.cameraZoom != renderer.cameraScale(scale)) {
+                selTile = renderer.cameraPos(ev.offsetX, ev.offsetY);
+                needsRerender = true;
+            }
         }}
         on:contextmenu={ev => {
             ev.preventDefault();
@@ -106,7 +114,15 @@
                 </span>
                 {#if selTile}
                     <span>Tile: {selTile.x} {selTile.y}</span>
-                {/if}
+                    <br />
+                    <span>Chunk: {Math.floor(selTile.x / CHUNK_SIZE)} {Math.floor(selTile.y / CHUNK_SIZE)}</span>
+                {/if}<br />
+                <span>
+                    Frame {numFrames}
+                    {#if frameTime !== null}
+                        {Math.round(frameTime * 10) / 10}ms
+                    {/if}
+                </span>
             </div>
         </div>
     </div>
