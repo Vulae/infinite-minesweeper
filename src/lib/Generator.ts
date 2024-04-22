@@ -5,21 +5,33 @@ import type { World } from "./World";
 
 
 
-interface Biome {
-    easyClass: typeof Tile;
-    hardClass: typeof Tile;
+type Biome = {
+    type: 'biome',
     weight: number;
+    tile: typeof Tile
+} | {
+    type: 'collection',
+    weight: number;
+    scale: number;
+    smoothness: number;
+    biomes: Biome[];
 }
 
-const Biomes: Biome[] = [
-    {
-        easyClass: VanillaTile,
-        hardClass: ChocolateTile,
+const Biomes: Biome = {
+    type: 'collection',
+    weight: 1,
+    scale: 24,
+    smoothness: 0.8,
+    biomes: [{
+        type: 'biome',
+        weight: 3,
+        tile: VanillaTile
+    }, {
+        type: 'biome',
         weight: 1,
-    }
-];
-
-const BiomeWeights = Biomes.map(biome => biome.weight);
+        tile: ChocolateTile
+    }]
+};
 
 
 
@@ -31,14 +43,21 @@ function smoothNoisyVoronoi(seed: number, x: number, y: number, dist: number, we
 }
 
 export function generateTile(world: World, x: number, y: number): Tile {
-    const biomeIndex = smoothNoisyVoronoi(world.biomeSeed, x / 16, y / 16, 0.2, BiomeWeights);
-    const isChocolate = smoothNoisyVoronoi(world.chocolateSeed, x / 24, y / 24, 0.5, [ 2, 1 ]);
+    const random = splitmix32(world.biomeSeed, false);
 
-    const biome = Biomes[biomeIndex];
+    let biome: Biome = Biomes;
+    while(biome.type == 'collection') {
+        const index = smoothNoisyVoronoi(
+            random(),
+            x / biome.scale, y / biome.scale,
+            biome.smoothness,
+            biome.biomes.map(b => b.weight)
+        );
+        biome = biome.biomes[index];
+    }
 
-    const tileClass = isChocolate ? biome.hardClass : biome.easyClass;
     // @ts-ignore - TODO: How do I deal with this?
-    return new tileClass(world, x, y);
+    return new biome.tile(world, x, y);
 }
 
 

@@ -35,14 +35,12 @@ export class World {
     public readonly seed: number;
     public readonly tileSeed: number;
     public readonly biomeSeed: number;
-    public readonly chocolateSeed: number;
 
     constructor(seed: number) {
         this.seed = seed;
         const rng = splitmix32(this.seed, false);
         this.tileSeed = rng();
         this.biomeSeed = rng();
-        this.chocolateSeed = rng();
     }
 
     private loadedChunks: {[key: ChunkCoordinate]: GeneratedChunk} = {};
