@@ -2,6 +2,9 @@
 
 
 // https://stackoverflow.com/questions/521295#answer-47593316
+/**
+ * @param normalRange If to return 0-1 range instead of 0-0xFFFFFFFF
+ */
 export function splitmix32(a: number, normalRange: boolean): () => number {
     return (): number => {
         a |= 0;
@@ -87,3 +90,48 @@ export function voronoi_noise2d(seed: number, x: number, y: number, weights: num
 }
 
 
+
+export function perlin_noise2d(seed: number, x: number, y: number): number {
+
+    function interpolate(a0: number, a1: number, w: number): number {
+        // return (a1 - a0) * w + a0;
+        // return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
+        return (a1 - a0) * ((w * (w * 6.0 - 15.0) + 10.0) * w * w * w) + a0;
+    }
+
+    const randomGradient = (x: number, y: number): { x: number, y: number } => {
+        const angle = sfc_hash(seed, x, y, 0);
+        return { x: Math.cos(angle), y: Math.sin(angle) };
+    }
+
+    const dotGridGradient = (ix: number, iy: number, x: number, y: number): number => {
+        const gradient = randomGradient(ix, iy);
+        const dx = x - ix;
+        const dy = y - iy;
+        return dx * gradient.x + dy * gradient.y;
+    }
+
+    const x0 = Math.floor(x);
+    const x1 = x0 + 1;
+    const y0 = Math.floor(y);
+    const y1 = y0 + 1;
+
+    const sx = x - x0;
+    const sy = y - y0;
+
+    const value = interpolate(
+        interpolate(
+            dotGridGradient(x0, y0, x, y),
+            dotGridGradient(x1, y0, x, y),
+            sx
+        ),
+        interpolate(
+            dotGridGradient(x0, y1, x, y),
+            dotGridGradient(x1, y1, x, y),
+            sx
+        ),
+        sy
+    );
+
+    return value;
+}

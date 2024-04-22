@@ -1,5 +1,5 @@
 
-import { voronoi_noise2d } from "./RNG";
+import { perlin_noise2d, splitmix32, voronoi_noise2d } from "./RNG";
 import { ChocolateTile, VanillaTile, type Tile } from "./Tile";
 import type { World } from "./World";
 
@@ -23,10 +23,16 @@ const BiomeWeights = Biomes.map(biome => biome.weight);
 
 
 
+function smoothNoisyVoronoi(seed: number, x: number, y: number, dist: number, weights: number[]): number {
+    const random = splitmix32(seed, false);
+    const dx = perlin_noise2d(random(), x, y) * dist;
+    const dy = perlin_noise2d(random(), x, y) * dist;
+    return voronoi_noise2d(random(), x + dx, y + dy, weights);
+}
+
 export function generateTile(world: World, x: number, y: number): Tile {
-    // TODO: voronoi with less straight edges, using perlin noise or something to offset the base xy coordinates.
-    const biomeIndex = voronoi_noise2d(world.biomeSeed, x / 16, y / 16, BiomeWeights);
-    const isChocolate = voronoi_noise2d(world.chocolateSeed, x / 24, y / 24, [ 2, 1 ]);
+    const biomeIndex = smoothNoisyVoronoi(world.biomeSeed, x / 16, y / 16, 0.2, BiomeWeights);
+    const isChocolate = smoothNoisyVoronoi(world.chocolateSeed, x / 24, y / 24, 0.5, [ 2, 1 ]);
 
     const biome = Biomes[biomeIndex];
 
