@@ -18,7 +18,7 @@ export function splitmix32(a: number, normalRange: boolean): () => number {
 // https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
 // I have no clue how this works, but it seems to be what I need?
 /**
- * @returns Hash value between -1 and 1
+ * @returns Hash value between 0 and 1
  */
 export function sfc_hash(seed: number, x: number, y: number, z: number): number {
     const a = 0x80AA1723;
