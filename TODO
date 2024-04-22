@@ -6,17 +6,19 @@
 
 * [ ] Extreme zoom out
     * (Zoom out very far, stop rendering individual tiles and just render biome colors)
-* [ ] Click on revealed tile to auto-reveal neighbors
+* [X] Click on revealed tile to auto-reveal neighbors
 
 * [ ] Add save/load system
 
-* [ ] Biomes
+* [X] Biomes
     * [X] Vanilla (Normal minesweeper)
-    * [ ] Chocolate (Vanilla with extra mines)
+    * [X] Chocolate (Vanilla with extra mines)
     * [ ] Blueberry (Minesweeper, up to 3 mines on a tile)
     * [ ] Blueberry Chocolate (Blueberry with extra mines)
-    * [ ] Waffle (2x2 checkers of tiles, dark sections have 3 mines, light sections have 1 mine)
-    * [ ] Stroopwafel (3x3 checkers of tiles, dark sections have 8 mines, light sections have 1 mine)
+    * [X] Waffle (2x2 checkers of tiles, dark sections have 3 mines, light sections have 1 mine)
+    * [X] Stroopwafel (3x3 checkers of tiles, dark sections have 8 mines, light sections have 1 mine)
+    * [ ] Strawberry (Tile may have a 2 numbers for bombs in range)
+    * [ ] Strawberry Chocolate (Strawberry with extra mines)
 
 * [ ] Items
     * [ ] Reveal (Reveal 3x3 area and flag bombs)

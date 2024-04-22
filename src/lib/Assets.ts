@@ -20,7 +20,15 @@ export const tileset = new TextureAtlas('/infinite-sweeper/tileset.png', {
     vanilla_tile_covered: [ 64, 0, 16, 16 ],
     vanilla_tile_revealed: [ 80, 0, 16, 16 ],
     chocolate_tile_covered: [ 64, 16, 16, 16 ],
-    chocolate_tile_revealed: [ 80, 16, 16, 16 ]
+    chocolate_tile_revealed: [ 80, 16, 16, 16 ],
+    waffle_tile_covered_light: [ 64, 32, 16, 16 ],
+    waffle_tile_revealed_light: [ 80, 32, 16, 16 ],
+    waffle_tile_covered_dark: [ 96, 32, 16, 16 ],
+    waffle_tile_revealed_dark: [ 112, 32, 16, 16 ],
+    stroopwafel_tile_covered_light: [ 64, 48, 16, 16 ],
+    stroopwafel_tile_revealed_light: [ 80, 48, 16, 16 ],
+    stroopwafel_tile_covered_dark: [ 96, 48, 16, 16 ],
+    stroopwafel_tile_revealed_dark: [ 112, 48, 16, 16 ]
 });
 
 export function tilesetNumberTexture(value: number) {
