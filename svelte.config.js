@@ -10,7 +10,7 @@ const config = {
 	kit: {
 		adapter: adapter(),
         paths: {
-            base: '/infinite-sweeper'
+            base: '/infinite-minesweeper'
         },
         alias: {
             '$components/*': './src/components/*'

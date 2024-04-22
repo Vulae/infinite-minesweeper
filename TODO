@@ -9,6 +9,7 @@
 * [X] Click on revealed tile to auto-reveal neighbors
 
 * [ ] Add save/load system
+    * Either save with full generated data (Current tile & tile state) or save with minimal data (Only state) and the rest can be regenerated.
 
 * [X] Biomes
     * [X] Vanilla (Normal minesweeper)
