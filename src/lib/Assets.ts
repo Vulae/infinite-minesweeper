@@ -3,7 +3,7 @@ import { TextureAtlas } from "./Atlas";
 
 
 
-export const tileset = new TextureAtlas('/infinite-sweeper/tileset.png', {
+export const tileset = new TextureAtlas('/infinite-minesweeper/tileset.png', {
     null: [ 0, 0, 16, 16 ],
     bomb: [ 16, 0, 16, 16 ],
     explosion: [ 16, 16, 16, 16 ],
