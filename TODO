@@ -4,11 +4,22 @@
 * [ ] Actual README.md
 
 * [X] Custom visuals
+    * [ ] Reveal visual particle
+    * [ ] Explosion particles
+* [ ] Custom sound effects
+    * [ ] Flag sound effect
+    * [ ] Reveal sound effect
+    * [ ] Bomb sound effect
 * [ ] Favicon
 
 * [ ] Extreme zoom out
     * (Zoom out very far, stop rendering individual tiles and just render biome colors)
 * [X] Click on revealed tile to auto-reveal neighbors
+
+* Control methods
+    * [X] Mouse control method
+    * [ ] Full keyboard control method
+    * [ ] Mobile control method
 
 * [X] Add save/load system
     * [ ] Convert save/load system to use IndexDB instead of LocalStorage
