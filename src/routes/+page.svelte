@@ -75,8 +75,18 @@
         keysInterval = setInterval(() => {
             let change: boolean = false;
 
-            if(keys.has('[')) { renderer.cameraScale(1.04); selTile = null; change = true; }
-            if(keys.has(']')) { renderer.cameraScale(0.96); selTile = null; change = true; }
+            if(keys.has('[')) {
+                if(renderer.cameraZoom != renderer.cameraScale(1.04)) {
+                    selTile = null;
+                    change = true;
+                }
+            }
+            if(keys.has(']')) {
+                if(renderer.cameraZoom != renderer.cameraScale(0.96)) {
+                    selTile = null;
+                    change = true;
+                }
+            }
             if(keys.has('ArrowUp')) { renderer.cameraTranslate(0, 10); change = true; }
             if(keys.has('ArrowDown')) { renderer.cameraTranslate(0, -10); change = true; }
             if(keys.has('ArrowLeft')) { renderer.cameraTranslate(10, 0); change = true; }
