@@ -1,5 +1,8 @@
 
+import Pako from "pako";
+import { BitIO } from "./BitIO";
 import { CHUNK_SIZE } from "./Constants";
+import { getTileType } from "./Generator";
 import type { Tile } from "./Tile";
 import type { World } from "./World";
 
@@ -60,6 +63,29 @@ export class GeneratedChunk extends Chunk {
 
     public getTile(chunkTileX: number, chunkTileY: number): Tile {
         return this.tiles[chunkTileX + chunkTileY * CHUNK_SIZE]!;
+    }
+
+    public save(): ArrayBuffer {
+        const io = new BitIO(2048);
+        for(const tile of this.tiles) {
+            tile.save(io);
+        }
+        return Pako.deflate(io.final()).buffer;
+    }
+
+    public static load(world: World, chunkX: number, chunkY: number, buffer: ArrayBuffer): GeneratedChunk {
+        const io = new BitIO(Pako.inflate(buffer));
+        let tiles: Tile[] = [];
+        for(let dy = 0; dy < CHUNK_SIZE; dy++) {
+            for(let dx = 0; dx < CHUNK_SIZE; dx++) {
+                const x = chunkX * CHUNK_SIZE + dx;
+                const y = chunkY * CHUNK_SIZE + dy;
+                const tileConstructor = getTileType(world, x, y);
+                const tile = tileConstructor.load(world, x, y, io);
+                tiles.push(tile);
+            }
+        }
+        return new GeneratedChunk(world, chunkX, chunkY, tiles);
     }
 }
 

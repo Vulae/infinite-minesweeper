@@ -1,5 +1,6 @@
 
 import { tileset, tilesetNumberTexture } from "./Assets";
+import type { BitIO } from "./BitIO";
 import { sfc_hash } from "./RNG";
 import type { World } from "./World";
 
@@ -66,6 +67,13 @@ export abstract class Tile {
      * Use reveal action
      */
     public abstract reveal(): void;
+
+
+
+    public abstract save(io: BitIO): void;
+    public static load(world: World, x: number, y: number, io: BitIO): Tile {
+        throw new Error('Tile.load needs to be implemented on derived class.');
+    }
 }
 
 
@@ -183,6 +191,20 @@ export class VanillaTile extends SingleMineTile {
                 break; }
         }
     }
+
+    public save(io: BitIO): void {
+        io.writeBits(2, this.state);
+    }
+
+    public static load(world: World, x: number, y: number, io: BitIO): Tile {
+        const tile = new VanillaTile(world, x, y);
+        switch(io.readBits(2)) {
+            case SingleMineTileState.Covered: break;
+            case SingleMineTileState.Flagged: tile.flag(); break;
+            case SingleMineTileState.Revealed: tile.reveal(); break;
+        }
+        return tile;
+    }
 }
 
 export class ChocolateTile extends SingleMineTile {
@@ -209,6 +231,20 @@ export class ChocolateTile extends SingleMineTile {
                 }
                 break; }
         }
+    }
+
+    public save(io: BitIO): void {
+        io.writeBits(2, this.state);
+    }
+
+    public static load(world: World, x: number, y: number, io: BitIO): Tile {
+        const tile = new ChocolateTile(world, x, y);
+        switch(io.readBits(2)) {
+            case SingleMineTileState.Covered: break;
+            case SingleMineTileState.Flagged: tile.flag(); break;
+            case SingleMineTileState.Revealed: tile.reveal(); break;
+        }
+        return tile;
     }
 }
 
@@ -259,6 +295,20 @@ export class WaffleTile extends SingleMineTile {
                 break; }
         }
     }
+
+    public save(io: BitIO): void {
+        io.writeBits(2, this.state);
+    }
+
+    public static load(world: World, x: number, y: number, io: BitIO): Tile {
+        const tile = new WaffleTile(world, x, y);
+        switch(io.readBits(2)) {
+            case SingleMineTileState.Covered: break;
+            case SingleMineTileState.Flagged: tile.flag(); break;
+            case SingleMineTileState.Revealed: tile.reveal(); break;
+        }
+        return tile;
+    }
 }
 
 export class Stroopwafel extends SingleMineTile {
@@ -288,5 +338,19 @@ export class Stroopwafel extends SingleMineTile {
                 }
                 break; }
         }
+    }
+
+    public save(io: BitIO): void {
+        io.writeBits(2, this.state);
+    }
+
+    public static load(world: World, x: number, y: number, io: BitIO): Tile {
+        const tile = new Stroopwafel(world, x, y);
+        switch(io.readBits(2)) {
+            case SingleMineTileState.Covered: break;
+            case SingleMineTileState.Flagged: tile.flag(); break;
+            case SingleMineTileState.Revealed: tile.reveal(); break;
+        }
+        return tile;
     }
 }

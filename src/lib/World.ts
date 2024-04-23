@@ -1,9 +1,10 @@
 
-import { Chunk, type GeneratedChunk } from "./Chunk";
+import { Chunk, GeneratedChunk } from "./Chunk";
 import { CHUNK_SIZE } from "./Constants";
 import { generateTile } from "./Generator";
 import { splitmix32 } from "./RNG";
 import { type Tile } from "./Tile";
+import { Base64 } from "js-base64";
 
 
 
@@ -43,14 +44,14 @@ export class World {
         this.biomeSeed = rng();
     }
 
-    private loadedChunks: {[key: ChunkCoordinate]: GeneratedChunk} = {};
+    private chunks: {[key: ChunkCoordinate]: GeneratedChunk} = {};
 
     public generateTile(x: number, y: number): Tile {
         return generateTile(this, x, y);
     }
 
     public getChunk(chunkX: number, chunkY: number): Chunk {
-        const loadedChunk = this.loadedChunks[`${chunkX},${chunkY}`];
+        const loadedChunk = this.chunks[`${chunkX},${chunkY}`];
         if(loadedChunk) return loadedChunk;
         return new Chunk(this, chunkX, chunkY);
     }
@@ -59,7 +60,7 @@ export class World {
         const chunk = this.getChunk(chunkX, chunkY);
         if(chunk.isGenerated()) return chunk;
         const genChunk = chunk.generate();
-        this.loadedChunks[`${chunkX},${chunkY}`] = genChunk;
+        this.chunks[`${chunkX},${chunkY}`] = genChunk;
         return genChunk;
     }
 
@@ -134,6 +135,42 @@ export class World {
         throw new Error('This error should never happen, it\'s just here to make TypeScript happy.');
     }
 
+
+
+    public save(): WorldSave {
+        const obj: WorldSave = {
+            seed: this.seed,
+            chunks: { }
+        };
+
+        for(const _chunkCoord in this.chunks) {
+            const chunkCoord = _chunkCoord as ChunkCoordinate;
+            const chunk = this.chunks[chunkCoord];
+            const buffer = chunk.save();
+            obj.chunks[chunkCoord] = Base64.fromUint8Array(new Uint8Array(buffer));
+        }
+
+        return obj;
+    }
+
+    public static load(save: WorldSave): World {
+        const world = new World(save.seed);
+
+        for(const _chunkCoord in save.chunks) {
+            const chunkCoord = _chunkCoord as ChunkCoordinate;
+            const chunk = save.chunks[chunkCoord];
+            const buffer = Base64.toUint8Array(chunk).buffer;
+            const [ _, chunkXstr, chunkYstr ] = chunkCoord.match(/^(-?\d+),(-?\d+)$/)!;
+            const [ chunkX, chunkY ] = [ parseInt(chunkXstr), parseInt(chunkYstr) ];
+            world.chunks[chunkCoord] = GeneratedChunk.load(world, chunkX, chunkY, buffer);
+        }
+
+        return world;
+    }
+
 }
 
-
+export type WorldSave = {
+    seed: number;
+    chunks: {[key: ChunkCoordinate]: string};
+}

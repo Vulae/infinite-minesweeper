@@ -62,7 +62,7 @@ function smoothNoisyVoronoi(seed: number, x: number, y: number, dist: number, we
     return voronoi_noise2d(random(), x + dx, y + dy, weights);
 }
 
-export function generateTile(world: World, x: number, y: number): Tile {
+export function getTileType(world: World, x: number, y: number): typeof Tile {
     const random = splitmix32(world.biomeSeed, false);
 
     let biome: Biome = Biomes;
@@ -76,8 +76,13 @@ export function generateTile(world: World, x: number, y: number): Tile {
         biome = biome.biomes[index];
     }
 
+    return biome.tile;
+}
+
+export function generateTile(world: World, x: number, y: number): Tile {
+    const tileConstructor = getTileType(world, x, y);
     // @ts-ignore - TODO: How do I deal with this?
-    return new biome.tile(world, x, y);
+    return new tileConstructor(world, x, y);
 }
 
 

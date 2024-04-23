@@ -1,14 +1,44 @@
 <script lang="ts">
     import { WorldRenderer } from "$lib/Renderer";
-    import { World } from "$lib/World";
+    import { World, type WorldSave } from "$lib/World";
     import { resize } from "$lib/actions/Resize";
     import { onDestroy, onMount } from "svelte";
     import { tileset } from "$lib/Assets";
     import { CHUNK_SIZE } from "$lib/Constants";
 
     let canvas: HTMLCanvasElement;
+    let firstCanvasResize: boolean = true;
+
     let world: World;
     let renderer: WorldRenderer;
+
+    $: if(world) {
+        console.log(world);
+    }
+
+    function load(): void {
+        const str = localStorage.getItem('save');
+        if(!str) {
+            console.log('Loaded new world');
+            localStorage.setItem('save', 'PLACEHOLDER');
+            world = new World(Math.floor(Math.random() * 0xFFFFFFFF));
+            const closest0 = world.closest0(0, 0);
+            world.reveal(closest0.x, closest0.y);
+        } else {
+            console.log('Loaded saved world');
+            const save: WorldSave = JSON.parse(str);
+            world = World.load(save);
+        }
+        renderer = new WorldRenderer(world, canvas);
+        firstCanvasResize = true;
+    }
+
+    function save(): void {
+        if(localStorage.getItem('save') !== null) {
+            console.log('Save world');
+            localStorage.setItem('save', JSON.stringify(world.save()));
+        }
+    }
 
     let needsRerender: boolean = false;
     let animFrame: number = -1;
@@ -29,28 +59,26 @@
     let selTile: { x: number, y: number } | null = null;
 
     onMount(() => {
-        const seed = parseInt(new URL(location.href).searchParams.get('seed') ?? '0');
-        world = new World(seed);
-        const closest0 = world.closest0(0, 0);
-        world.reveal(closest0.x, closest0.y);
-        renderer = new WorldRenderer(world, canvas);
-        setTimeout(() => {
-            renderer.cameraTranslate(canvas.width / 2, canvas.height / 2);
-            needsRerender = true;
-        }, 100);
+        load();
+
         tileset.onLoad(() => {
             needsRerender = true;
         });
-        console.log(world);
+
         render();
     });
 
     onDestroy(() => {
-        try {
-            location.reload();
-        } catch(err) { }
+        cancelAnimationFrame(animFrame);
+        save();
     });
 </script>
+
+<svelte:window
+    on:unload={() => {
+        save();
+    }}
+/>
 
 <div class="w-screen h-screen grid grid-cols-1 grid-rows-1">
     <canvas
@@ -61,6 +89,10 @@
             canvas.height = height;
             renderer.cameraScale(1);
             selTile = null;
+            if(firstCanvasResize) {
+                renderer.cameraTranslate(canvas.width / 2, canvas.height / 2);
+                firstCanvasResize = false;
+            }
             needsRerender = true;
         }}
         on:mousedown={ev => {
@@ -111,6 +143,11 @@
                     Middle Click: Drag view<br />
                     Scroll Wheel: Zoom view<br />
                 </span>
+                {#if world}
+                    <span>
+                        Seed: {world.seed}
+                    </span><br />
+                {/if}
                 {#if selTile}
                     <span>Tile: {selTile.x} {selTile.y}</span>
                     <br />

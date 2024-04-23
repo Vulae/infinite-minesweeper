@@ -1,4 +1,6 @@
 
+* [ ] Clean up /src/lib directory
+
 * [ ] Actual README.md
 
 * [X] Custom visuals
@@ -8,8 +10,9 @@
     * (Zoom out very far, stop rendering individual tiles and just render biome colors)
 * [X] Click on revealed tile to auto-reveal neighbors
 
-* [ ] Add save/load system
-    * Either save with full generated data (Current tile & tile state) or save with minimal data (Only state) and the rest can be regenerated.
+* [X] Add save/load system
+    * [ ] Convert save/load system to use IndexDB instead of LocalStorage
+    * [ ] Add save version number that resets world when versions clash.
 
 * [X] Biomes
     * [X] Vanilla (Normal minesweeper)
