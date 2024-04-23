@@ -17,3 +17,12 @@ body {
 }
 
 
+
+a {
+    @apply text-blue-500;
+    
+    &:visited {
+        @apply text-purple-500;
+    }
+}
+
