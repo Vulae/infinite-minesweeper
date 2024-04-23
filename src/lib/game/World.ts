@@ -2,7 +2,7 @@
 import { Chunk, GeneratedChunk } from "./Chunk";
 import { CHUNK_SIZE } from "./Constants";
 import { generateTile } from "./Generator";
-import { splitmix32 } from "./RNG";
+import { splitmix32 } from "../RNG";
 import { type Tile } from "./Tile";
 import { Base64 } from "js-base64";
 

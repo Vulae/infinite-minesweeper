@@ -1,5 +1,5 @@
 
-import { TextureAtlas } from "./Atlas";
+import { TextureAtlas } from "../Atlas";
 
 
 

@@ -1,5 +1,5 @@
 
-import { perlin_noise2d, splitmix32, voronoi_noise2d } from "./RNG";
+import { perlin_noise2d, splitmix32, voronoi_noise2d } from "../RNG";
 import { ChocolateTile, Stroopwafel, VanillaTile, WaffleTile, type Tile } from "./Tile";
 import type { World } from "./World";
 

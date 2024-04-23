@@ -1,7 +1,7 @@
 
 import { tileset, tilesetNumberTexture } from "./Assets";
-import type { BitIO } from "./BitIO";
-import { sfc_hash } from "./RNG";
+import type { BitIO } from "../BitIO";
+import { sfc_hash } from "../RNG";
 import type { World } from "./World";
 
 

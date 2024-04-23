@@ -23,7 +23,13 @@
 
 * [X] Add save/load system
     * [ ] Convert save/load system to use IndexDB instead of LocalStorage
-    * [ ] Add save version number that resets world when versions clash.
+    * [ ] Add save version number that resets world when versions clash
+    * [ ] Don't save unmodified chunks
+
+* [ ] Chunk information (Optional to display these)
+    * [ ] First interaction date
+    * [ ] Completion date
+    * [ ] Number of losses
 
 * [X] Biomes
     * [X] Vanilla (Normal minesweeper)

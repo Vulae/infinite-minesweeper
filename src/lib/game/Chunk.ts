@@ -1,6 +1,6 @@
 
 import Pako from "pako";
-import { BitIO } from "./BitIO";
+import { BitIO } from "../BitIO";
 import { CHUNK_SIZE } from "./Constants";
 import { getTileType } from "./Generator";
 import type { Tile } from "./Tile";
