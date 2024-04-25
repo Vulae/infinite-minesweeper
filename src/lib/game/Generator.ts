@@ -1,14 +1,18 @@
 
 import { perlin_noise2d, splitmix32, voronoi_noise2d } from "../RNG";
-import { ChocolateTile, Stroopwafel, VanillaTile, WaffleTile, type Tile } from "./Tile";
 import type { World } from "./World";
+import { ChocolateTile } from "./tile/Chocolate";
+import { StroopwafelTile } from "./tile/Stroopwafel";
+import type { Tile, ValidTile, ValidTileConstructor } from "./tile/Tile";
+import { VanillaTile } from "./tile/Vanilla";
+import { WaffleTile } from "./tile/Waffle";
 
 
 
 type Biome = {
     type: 'biome',
     weight: number;
-    tile: typeof Tile
+    tile: ValidTileConstructor;
 } | {
     type: 'collection',
     weight: number;
@@ -48,7 +52,7 @@ const Biomes: Biome = {
         }, {
             type: 'biome',
             weight: 2,
-            tile: Stroopwafel
+            tile: StroopwafelTile
         }]
     }]
 };
@@ -62,7 +66,7 @@ function smoothNoisyVoronoi(seed: number, x: number, y: number, dist: number, we
     return voronoi_noise2d(random(), x + dx, y + dy, weights);
 }
 
-export function getTileType(world: World, x: number, y: number): typeof Tile {
+export function getTileType(world: World, x: number, y: number): ValidTileConstructor {
     const random = splitmix32(world.biomeSeed, false);
 
     let biome: Biome = Biomes;
@@ -79,7 +83,7 @@ export function getTileType(world: World, x: number, y: number): typeof Tile {
     return biome.tile;
 }
 
-export function generateTile(world: World, x: number, y: number): Tile {
+export function generateTile(world: World, x: number, y: number): ValidTile {
     const tileConstructor = getTileType(world, x, y);
     // @ts-ignore - TODO: How do I deal with this?
     return new tileConstructor(world, x, y);

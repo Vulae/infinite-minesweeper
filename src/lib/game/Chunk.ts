@@ -3,8 +3,8 @@ import Pako from "pako";
 import { BitIO } from "../BitIO";
 import { CHUNK_SIZE } from "./Constants";
 import { getTileType } from "./Generator";
-import type { Tile } from "./Tile";
 import type { World } from "./World";
+import type { ValidTile } from "./tile/Tile";
 
 
 
@@ -31,7 +31,7 @@ export class Chunk {
 
         console.log(`Generating new chunk: ${this.chunkX}, ${this.chunkY}`);
 
-        const tiles: Tile[] = [];
+        const tiles: ValidTile[] = [];
 
         for(let dy = 0; dy < CHUNK_SIZE; dy++) {
             for(let dx = 0; dx < CHUNK_SIZE; dx++) {
@@ -47,9 +47,9 @@ export class Chunk {
 
 
 export class GeneratedChunk extends Chunk {
-    public readonly tiles: Tile[];
+    public readonly tiles: ValidTile[];
 
-    public constructor(world: World, chunkX: number, chunkY: number, tiles: Tile[]) {
+    public constructor(world: World, chunkX: number, chunkY: number, tiles: ValidTile[]) {
         super(world, chunkX, chunkY);
         this.tiles = tiles;
         if(this.tiles.length != CHUNK_SIZE * CHUNK_SIZE) {
@@ -57,11 +57,11 @@ export class GeneratedChunk extends Chunk {
         }
     }
 
-    public getTileAbsolute(tileX: number, tileY: number): Tile {
+    public getTileAbsolute(tileX: number, tileY: number): ValidTile {
         return this.getTile(tileX - this.chunkX * CHUNK_SIZE, tileY - this.chunkY * CHUNK_SIZE);
     }
 
-    public getTile(chunkTileX: number, chunkTileY: number): Tile {
+    public getTile(chunkTileX: number, chunkTileY: number): ValidTile {
         return this.tiles[chunkTileX + chunkTileY * CHUNK_SIZE]!;
     }
 
@@ -75,7 +75,7 @@ export class GeneratedChunk extends Chunk {
 
     public static load(world: World, chunkX: number, chunkY: number, buffer: ArrayBuffer): GeneratedChunk {
         const io = new BitIO(Pako.inflate(buffer));
-        let tiles: Tile[] = [];
+        let tiles: ValidTile[] = [];
         for(let dy = 0; dy < CHUNK_SIZE; dy++) {
             for(let dx = 0; dx < CHUNK_SIZE; dx++) {
                 const x = chunkX * CHUNK_SIZE + dx;

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { tileset } from "$lib/game/Assets";
     import { WorldRenderer } from "$lib/game/Renderer";
     import { load, save } from "$lib/game/Save";
     import { World } from "$lib/game/World";
@@ -39,13 +38,9 @@
     let keys: Set<string> = new Set();
     let keysInterval: number = -1;
 
-    onMount(() => {
+    onMount(async () => {
         world = load(saveSlot);
         renderer = new WorldRenderer(world, canvas);
-
-        tileset.onLoad(() => {
-            needsRerender = true;
-        });
 
         // TODO: Clean Up!
         clearInterval(keysInterval);
@@ -72,7 +67,12 @@
             }
         }, 1000 / 60);
 
-        render();
+        // FIXME: Why is this not always accurate.
+        // Sometimes renderer.init() does not load theme fully before returning.
+        await renderer.init();
+        setTimeout(() => {
+            render();
+        }, 100);
     });
 
     onDestroy(() => {
@@ -90,7 +90,7 @@
     on:keyup={ev => {
         keys.delete(ev.key);
     }}
-    on:unload={() => {
+    on:beforeunload={() => {
         save(saveSlot, world);
     }}
 />

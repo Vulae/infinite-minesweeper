@@ -1,5 +1,7 @@
 
 import type { World } from "./World";
+import type { Theme } from "./theme/Theme";
+import { ThemeRetro } from "./theme/retro";
 
 
 
@@ -7,6 +9,8 @@ export class WorldRenderer {
     public readonly world: World;
     public readonly canvas: HTMLCanvasElement;
     public readonly ctx: CanvasRenderingContext2D;
+
+    public readonly theme: Theme = new ThemeRetro();
 
     constructor(world: World, canvas: HTMLCanvasElement) {
         this.world = world;
@@ -16,6 +20,10 @@ export class WorldRenderer {
             throw new Error('This browser or machine does not support canvas 2d.');
         }
         this.ctx = ctx;
+    }
+
+    public async init(): Promise<void> {
+        await this.theme.init();
     }
 
     // Camera position in tiles
@@ -101,7 +109,7 @@ export class WorldRenderer {
                 this.ctx.scale(1.01, 1.01);
 
                 const tile = this.world.getTile(x, y);
-                tile.render(this.ctx);
+                this.theme.drawTile(this.ctx, tile);
 
                 this.ctx.restore();
             }

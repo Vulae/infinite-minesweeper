@@ -3,19 +3,32 @@ import { World, type WorldSave } from "./World";
 
 
 
+function newWorld(saveSlot: string, overwrite: boolean): World {
+    console.log('Loaded new world');
+    if(overwrite) {
+        localStorage.setItem(saveSlot, 'PLACEHOLDER');
+    }
+    const world = new World(Math.floor(Math.random() * 0xFFFFFFFF));
+    const closest0 = world.closest0(0, 0);
+    world.reveal(closest0.x, closest0.y);
+    return world;
+}
+
 export function load(saveSlot: string): World {
     const str = localStorage.getItem(saveSlot);
     if(!str) {
-        console.log('Loaded new world');
-        localStorage.setItem(saveSlot, 'PLACEHOLDER');
-        const world = new World(Math.floor(Math.random() * 0xFFFFFFFF));
-        const closest0 = world.closest0(0, 0);
-        world.reveal(closest0.x, closest0.y);
-        return world;
+        return newWorld(saveSlot, true);
     } else {
         console.log('Loaded saved world');
-        const save: WorldSave = JSON.parse(str);
-        return World.load(save);
+        try {
+            const save: WorldSave = JSON.parse(str);
+            return World.load(save);
+        } catch(err) {
+            console.error('Failed to load world.');
+            console.error(err);
+
+            return newWorld(saveSlot, false);
+        }
     }
 }
 

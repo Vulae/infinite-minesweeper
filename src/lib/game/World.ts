@@ -3,8 +3,8 @@ import { Chunk, GeneratedChunk } from "./Chunk";
 import { CHUNK_SIZE } from "./Constants";
 import { generateTile } from "./Generator";
 import { splitmix32 } from "../RNG";
-import { type Tile } from "./Tile";
 import { Base64 } from "js-base64";
+import type { ValidTile } from "./tile/Tile";
 
 
 
@@ -46,7 +46,7 @@ export class World {
 
     private chunks: {[key: ChunkCoordinate]: GeneratedChunk} = {};
 
-    public generateTile(x: number, y: number): Tile {
+    public generateTile(x: number, y: number): ValidTile {
         return generateTile(this, x, y);
     }
 
@@ -64,7 +64,7 @@ export class World {
         return genChunk;
     }
 
-    public getTile(x: number, y: number): Tile {
+    public getTile(x: number, y: number): ValidTile {
         const chunkX = Math.floor(x / CHUNK_SIZE);
         const chunkY = Math.floor(y / CHUNK_SIZE);
         const chunk = this.getGeneratedChunk(chunkX, chunkY);
@@ -97,8 +97,8 @@ export class World {
             }
         }
 
-        let reveal: Tile[] = [ ];
-        let stack: Tile[] = [ tile ];
+        let reveal: ValidTile[] = [ ];
+        let stack: ValidTile[] = [ tile ];
 
         while(stack.length > 0) {
             const tile = stack.pop()!;
