@@ -1,32 +1,47 @@
 <script lang="ts">
     import { resize } from "$lib/actions/Resize";
-    import { WorldRenderer } from "$lib/game/Renderer";
+    import { WorldRenderer } from "$lib/game/WorldRenderer";
+    import { Viewport } from "$lib/game/Viewport";
     import type { World } from "$lib/game/World";
     import { createEventDispatcher, onDestroy, onMount } from "svelte";
+    import { ParticleRenderer } from "$lib/game/ParticleRenderer";
+    import type { Theme } from "$lib/game/theme/Theme";
     const dispatcher = createEventDispatcher();
 
+    let container: HTMLDivElement;
+
     export let world: World;
-    let renderer: WorldRenderer;
-    let canvas: HTMLCanvasElement;
+    export let theme: Theme;
+
+    const viewport: Viewport = new Viewport(world);
+
+    // We separate world & particles to improve performance, not needing to render both at the same time.
+    let worldRenderer: WorldRenderer;
+    let worldCanvas: HTMLCanvasElement;
+
+    let particleRenderer: ParticleRenderer;
+    let particleCanvas: HTMLCanvasElement;
 
     let firstCanvasResize: boolean = true;
 
-    let needsRerender: boolean = false;
+    let worldNeedsRerender: boolean = false;
     let animFrame: number = -1;
     const render = () => {
         cancelAnimationFrame(animFrame);
         animFrame = requestAnimationFrame(render);
-        if(needsRerender) {
-            needsRerender = false;
-            renderer.render();
+        if(worldNeedsRerender) {
+            worldNeedsRerender = false;
+            worldRenderer.render();
         }
+        particleRenderer.render();
     }
 
     let keys: Set<string> = new Set();
     let keysInterval: number = -1;
 
     onMount(async () => {
-        renderer = new WorldRenderer(world, canvas);
+        worldRenderer = new WorldRenderer(world, theme, worldCanvas, viewport);
+        particleRenderer = new ParticleRenderer(world, theme, particleCanvas, viewport);
 
         // TODO: Clean Up!
         clearInterval(keysInterval);
@@ -34,41 +49,46 @@
             let change: boolean = false;
 
             if(keys.has('[')) {
-                if(renderer.cameraZoom != renderer.cameraScale(1.04)) {
+                if(viewport.cameraZoom != viewport.cameraScale(1.04)) {
                     change = true;
                 }
             }
             if(keys.has(']')) {
-                if(renderer.cameraZoom != renderer.cameraScale(0.96)) {
+                if(viewport.cameraZoom != viewport.cameraScale(0.96)) {
                     change = true;
                 }
             }
-            if(keys.has('ArrowUp')) { renderer.cameraTranslate(0, 10); change = true; }
-            if(keys.has('ArrowDown')) { renderer.cameraTranslate(0, -10); change = true; }
-            if(keys.has('ArrowLeft')) { renderer.cameraTranslate(10, 0); change = true; }
-            if(keys.has('ArrowRight')) { renderer.cameraTranslate(-10, 0); change = true; }
+            if(keys.has('ArrowUp')) { viewport.cameraTranslate(0, 10); change = true; }
+            if(keys.has('ArrowDown')) { viewport.cameraTranslate(0, -10); change = true; }
+            if(keys.has('ArrowLeft')) { viewport.cameraTranslate(10, 0); change = true; }
+            if(keys.has('ArrowRight')) { viewport.cameraTranslate(-10, 0); change = true; }
 
             if(keys.has('s')) {
                 // DEBUG: Zoom to nearest power of 2, for a crisp screenshot.
-                renderer.cameraZoom = Math.pow(2, Math.ceil(Math.log(renderer.cameraZoom) / Math.log(2)));
-                renderer.cameraScale(1);
+                viewport.cameraZoom = Math.pow(2, Math.ceil(Math.log(viewport.cameraZoom) / Math.log(2)));
+                viewport.cameraScale(1);
                 change = true;
             }
 
             if(change) {
-                needsRerender = true;
+                worldNeedsRerender = true;
             }
         }, 1000 / 60);
 
         // FIXME: Why is this not always accurate.
         // Sometimes renderer.init() does not load theme fully before returning.
-        await renderer.init();
+        await worldRenderer.init();
+        await particleRenderer.init();
         setTimeout(() => {
+            viewport.setSize(worldCanvas.width, worldCanvas.height);
+            worldNeedsRerender = true;
             render();
         }, 100);
     });
 
     onDestroy(() => {
+        worldRenderer.destroy();
+        particleRenderer.destroy();
         cancelAnimationFrame(animFrame);
         clearInterval(keysInterval);
     });
@@ -84,59 +104,66 @@
     }}
 />
 
-<canvas
-    class="w-full h-full cursor-pointer"
-    bind:this={canvas}
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div
+    class="w-full h-full force-overlap cursor-pointer"
+    bind:this={container}
     use:resize={(width, height) => {
-        canvas.width = width;
-        canvas.height = height;
-        renderer.cameraScale(1);
+        worldCanvas.width = width;
+        worldCanvas.height = height;
+        particleCanvas.width = width;
+        particleCanvas.height = height;
+        viewport.setSize(width, height);
+        viewport.cameraScale(1);
         if(firstCanvasResize) {
-            renderer.cameraTranslate(canvas.width / 2, canvas.height / 2);
+            viewport.cameraTranslate(width / 2, height / 2);
             firstCanvasResize = false;
         }
-        needsRerender = true;
+        worldNeedsRerender = true;
     }}
     on:mousedown={ev => {
-        if(document.pointerLockElement == canvas) return;
+        if(document.pointerLockElement == container) return;
         if(ev.button == 1) {
-            canvas.requestPointerLock();
+            container.requestPointerLock();
             ev.preventDefault();
         } else if(ev.button == 0) {
             ev.preventDefault();
-            const pos = renderer.cameraPos(ev.offsetX, ev.offsetY);
+            const pos = viewport.cameraPos(ev.offsetX, ev.offsetY);
             dispatcher('action', { type: 'reveal', pos });
-            needsRerender = true;
+            worldNeedsRerender = true;
         } else if(ev.button == 2) {
             ev.preventDefault();
-            const pos = renderer.cameraPos(ev.offsetX, ev.offsetY);
+            const pos = viewport.cameraPos(ev.offsetX, ev.offsetY);
             dispatcher('action', { type: 'flag', pos });
-            needsRerender = true;
+            worldNeedsRerender = true;
         } else if(ev.button == 3) {
             // DEBUG: Reset tile
             ev.preventDefault();
-            const pos = renderer.cameraPos(ev.offsetX, ev.offsetY);
+            const pos = viewport.cameraPos(ev.offsetX, ev.offsetY);
             dispatcher('action', { type: 'reset', pos });
-            needsRerender = true;
+            worldNeedsRerender = true;
         }
     }}
     on:mouseup={ev => {
-        if(document.pointerLockElement != canvas) return;
+        if(document.pointerLockElement != container) return;
         if(ev.button != 1) return;
         document.exitPointerLock();
     }}
     on:mousemove={ev => {
-        if(document.pointerLockElement != canvas) return;
-        renderer.cameraTranslate(ev.movementX, ev.movementY);
-        needsRerender = true;
+        if(document.pointerLockElement != container) return;
+        viewport.cameraTranslate(ev.movementX, ev.movementY);
+        worldNeedsRerender = true;
     }}
     on:wheel|passive={ev => {
         const scale = ev.deltaY > 0 ? 0.9 : 1.1;
-        if(renderer.cameraZoom != renderer.cameraScale(scale)) {
-            needsRerender = true;
+        if(viewport.cameraZoom != viewport.cameraScale(scale)) {
+            worldNeedsRerender = true;
         }
     }}
     on:contextmenu={ev => {
         ev.preventDefault();
     }}
-/>
+>
+    <canvas bind:this={worldCanvas} />
+    <canvas bind:this={particleCanvas} />
+</div>

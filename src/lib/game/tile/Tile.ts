@@ -32,16 +32,19 @@ export abstract class Tile {
      * Mines search pattern
      */
     public abstract readonly searchPattern: { x: number, y: number }[];
+    private minesNearbyCache: number | null = null;
     /**
      * @returns Number of mines in search pattern
      */
-    public minesNearby(): number {
-        // TODO: Cache return value.
-        let count: number = 0;
-        for(const offset of this.searchPattern) {
-            count += this.world.getTile(this.x + offset.x, this.y + offset.y).numMines();
+    public minesNearby(useCache: boolean = false): number {
+        if(this.minesNearbyCache !== null && useCache) {
+            return this.minesNearbyCache;
         }
-        return count;
+        this.minesNearbyCache = 0;
+        for(const offset of this.searchPattern) {
+            this.minesNearbyCache += this.world.getTile(this.x + offset.x, this.y + offset.y).numMines();
+        }
+        return this.minesNearbyCache;
     }
     /**
      * @returns Number of flags in search pattern
@@ -61,8 +64,9 @@ export abstract class Tile {
     public abstract flag(): void;
     /**
      * Use reveal action
+     * @returns If tile was revealed
      */
-    public abstract reveal(): void;
+    public abstract reveal(): boolean;
 
 
 
@@ -74,7 +78,8 @@ export abstract class Tile {
 
 
 
-// TODO: Probably rename above to TileBase and rename below to just Tile.
+// TODO: Probably rename above to TileBase and rename below type to just Tile.
+// TODO: Swap name around, eg: VanillaTile -> TileVanilla
 export type ValidTile = VanillaTile | ChocolateTile | WaffleTile | StroopwafelTile;
 // FIXME: This is dumb, why not `typeof ArrayElement<ValidTile>`
 export type ValidTileConstructor = typeof VanillaTile | typeof ChocolateTile | typeof WaffleTile | typeof StroopwafelTile;

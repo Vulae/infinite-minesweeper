@@ -40,9 +40,10 @@ export abstract class SingleMineTile extends Tile {
         }
     }
 
-    public reveal(): void {
-        if(this.state == SingleMineTileState.Flagged) return;
+    public reveal(): boolean {
+        if(this.state != SingleMineTileState.Covered) return false;
         this.state = SingleMineTileState.Revealed;
+        return true;
     }
 }
 

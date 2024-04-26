@@ -3,14 +3,14 @@
 
 * [ ] Actual README.md
 
-* [X] Custom visuals
-    * [ ] Reveal visual particle
-    * [ ] Explosion particles
-* [ ] Custom sound effects
-    * [ ] Flag sound effect
-    * [ ] Reveal sound effect
-    * [ ] Bomb sound effect
+* [X] Particles
+    * [ ] Option to disable particle layer
+* [ ] Better sound effects
+    * [ ] Option to change volume of sound effects
 * [ ] Favicon
+* [ ] Theme picker
+    * [ ] Modern theme (Flat style graphics)
+    * [ ] SeaBear1015 theme (https://github.com/Vulae/infinite-minesweeper/issues/4)
 
 * [ ] Extreme zoom out
     * (Zoom out very far, stop rendering individual tiles and just render biome colors)

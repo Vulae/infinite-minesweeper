@@ -30,6 +30,7 @@
     }
 
     .biome-backdrop {
+        // FIXME: overflow-visible on image is a very jank way to do this, please use another way.
         @apply blur-sm w-full h-full object-cover overflow-visible;
 
         animation: backdrop-intro 250ms ease-out;

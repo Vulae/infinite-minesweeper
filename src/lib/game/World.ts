@@ -5,6 +5,7 @@ import { generateTile } from "./Generator";
 import { splitmix32 } from "../RNG";
 import { Base64 } from "js-base64";
 import type { ValidTile } from "./tile/Tile";
+import { EventDispatcher } from "$lib/EventDispatcher";
 
 
 
@@ -32,12 +33,20 @@ function* spiralIter(offsetX: number, offsetY: number): Generator<{ x: number, y
 
 type ChunkCoordinate = `${number},${number}`;
 
-export class World {
+export class World extends EventDispatcher<{
+    'sound_reveal': number;
+    'sound_unflag': null;
+    'sound_explosion': null;
+    'particle_unflag': { x: number, y: number };
+    'particle_explosion': { x: number, y: number };
+    'particle_reveal': { x: number, y: number };
+}> {
     public readonly seed: number;
     public readonly tileSeed: number;
     public readonly biomeSeed: number;
 
     constructor(seed: number) {
+        super();
         this.seed = seed;
         const rng = splitmix32(this.seed, false);
         this.tileSeed = rng();
@@ -74,31 +83,36 @@ export class World {
 
 
     public flag(x: number, y: number): void {
-        return this.getTile(x, y).flag();
+        const tile = this.getTile(x, y);
+        const prevNumFlags = tile.numFlags();
+        tile.flag();
+        const currentNumFlags = tile.numFlags();
+        if(currentNumFlags == 0 && currentNumFlags != prevNumFlags) {
+            this.dispatchEvent('particle_unflag', { x, y });
+            this.dispatchEvent('sound_unflag', null);
+        }
     }
 
-    public reveal(x: number, y: number, userClick: boolean = true): boolean {
+    private _revealCount: number = 0;
+    private _died: boolean = false;
+    private _reveal(x: number, y: number): void {
         const tile = this.getTile(x, y);
-        tile.reveal();
-        if(tile.numMines() > 0) return true;
-        if(tile.minesNearby() > 0) {
-            if(userClick) {
-                let death = false;
-                if(tile.flagsNearby() == tile.minesNearby()) {
-                    for(const offset of tile.searchPattern) {
-                        if(this.reveal(tile.x + offset.x, tile.y + offset.y, false)) {
-                            death = true;
-                        }
-                    }
-                }
-                return death;
+        if(tile.reveal()) {
+            this._revealCount++;
+            if(tile.numMines() > 0) {
+                this._died = true;
+                this.dispatchEvent('particle_explosion', { x: tile.x, y: tile.y });
+                return;
             } else {
-                return false;
+                this.dispatchEvent('particle_reveal', { x: tile.x, y: tile.y });
             }
         }
 
         let reveal: ValidTile[] = [ ];
-        let stack: ValidTile[] = [ tile ];
+        let stack: ValidTile[] = [ ];
+        if(tile.minesNearby() == tile.flagsNearby()) {
+            stack.push(tile);
+        }
 
         while(stack.length > 0) {
             const tile = stack.pop()!;
@@ -118,9 +132,33 @@ export class World {
             }
         }
 
-        reveal.forEach(t => t.reveal());
+        for(const r of reveal) {
+            if(r.reveal()) {
+                this._revealCount++;
+                if(r.numMines() > 0) {
+                    this._died = true;
+                    this.dispatchEvent('particle_explosion', { x: r.x, y: r.y });
+                } else {
+                    this.dispatchEvent('particle_reveal', { x: r.x, y: r.y });
+                }
+            }
+        }
+    }
 
-        return false;
+    /**
+     * @returns If death
+     */
+    public reveal(x: number, y: number): boolean {
+        this._revealCount = 0;
+        this._died = false;
+        this._reveal(x, y);
+        if(this._revealCount > 0) {
+            this.dispatchEvent('sound_reveal', this._revealCount);
+        }
+        if(this._died) {
+            this.dispatchEvent('sound_explosion', null);
+        }
+        return this._died;
     }
 
     public reset(x: number, y: number): void {
