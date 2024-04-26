@@ -2,7 +2,7 @@
 import Pako from "pako";
 import { BitIO } from "../BitIO";
 import { CHUNK_SIZE } from "./Constants";
-import { getTileType } from "./Generator";
+import { generateTile, getTileType } from "./Generator";
 import type { World } from "./World";
 import type { ValidTile } from "./tile/Tile";
 
@@ -63,6 +63,14 @@ export class GeneratedChunk extends Chunk {
 
     public getTile(chunkTileX: number, chunkTileY: number): ValidTile {
         return this.tiles[chunkTileX + chunkTileY * CHUNK_SIZE]!;
+    }
+
+    public resetTileAbsolute(tileX: number, tileY: number): void {
+        return this.resetTile(tileX - this.chunkX * CHUNK_SIZE, tileY - this.chunkY * CHUNK_SIZE);
+    }
+
+    public resetTile(chunkTileX: number, chunkTileY: number): void {
+        this.tiles[chunkTileX + chunkTileY * CHUNK_SIZE] = generateTile(this.world, this.chunkX * CHUNK_SIZE + chunkTileX, this.chunkY * CHUNK_SIZE + chunkTileY);
     }
 
     public save(): ArrayBuffer {

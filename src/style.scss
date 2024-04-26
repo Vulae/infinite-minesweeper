@@ -5,6 +5,18 @@
 
 
 
+@layer utilities {
+    .force-overlap {
+        @apply grid grid-cols-1 grid-rows-1;
+
+        & > * {
+            @apply w-full h-full col-start-1 col-end-1 row-start-1 row-end-1;
+        }
+    }
+}
+
+
+
 @font-face {
     font-family: 'Caveat';
     src: url("https://fonts.gstatic.com/s/caveat/v18/Wnz6HAc5bAfYB2Q7ZjYY.woff2");
@@ -19,10 +31,14 @@ body {
 
 
 a {
-    @apply text-blue-500;
+    @apply text-blue-800;
     
     &:visited {
-        @apply text-purple-500;
+        @apply text-purple-800;
     }
 }
 
+
+*::selection {
+    @apply bg-purple-500 bg-opacity-70 text-white;
+}

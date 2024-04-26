@@ -123,6 +123,12 @@ export class World {
         return false;
     }
 
+    public reset(x: number, y: number): void {
+        const chunk = this.getChunk(Math.floor(x / CHUNK_SIZE), Math.floor(y / CHUNK_SIZE));
+        if(!chunk.isGenerated()) return;
+        chunk.resetTileAbsolute(x, y);
+    }
+
 
 
     public closest0(offsetX: number, offsetY: number): { x: number, y: number } {

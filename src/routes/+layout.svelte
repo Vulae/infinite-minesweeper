@@ -1,4 +1,5 @@
 <script lang="ts">
+    import GithubCorner from "$components/GithubCorner.svelte";
     import "../style.scss";
 
 </script>
@@ -10,3 +11,5 @@
 </svelte:head>
 
 <slot />
+
+<GithubCorner url={"https://github.com/Vulae/infinite-minesweeper"} newTab={true} />

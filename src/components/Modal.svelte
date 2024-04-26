@@ -1,44 +1,67 @@
-<!-- This is definitely not the way to do modals. -->
-<!-- A better way is to have a ModalManager that displays all the modals from the root of the HTML. -->
+<!-- TODO: Fade out animation -->
 <script lang="ts">
-    import LucideX from "lucide-svelte/icons/x";
-
     export let visible: boolean = false;
-    export let title: string;
     export let closable: boolean = true;
     
 </script>
 
+<style lang="scss">
+
+    .modal {
+        @apply fixed top-0 left-0 bottom-0 right-0;
+        @apply grid grid-cols-1 grid-rows-1;
+
+        & > .modal-background {
+            @apply backdrop-blur;
+
+            animation: modal-background-fade-in 500ms ease-in-out;
+
+            @keyframes modal-background-fade-in {
+                0% {
+                    opacity: 0%;
+                    backdrop-filter: blur(0px);
+                }
+                50% {
+                    opacity: 100%;
+                }
+                100% {
+                    backdrop-filter: blur(8px);
+                }
+            }
+
+        }
+
+        & > .modal-content {
+            animation: modal-content-fade-in 250ms ease-in-out;
+
+            @keyframes modal-content-fade-in {
+                from {
+                    opacity: 0%;
+                }
+                to {
+                    opacity: 100%;
+                }
+            }
+        }
+
+        & > .modal-background, & > .modal-content {
+            @apply w-full h-full col-start-1 col-end-1 row-start-1 row-end-1;
+        }
+    }
+
+</style>
+
 {#if visible}
-    <div class="z-50 fixed top-0 left-0 w-screen h-screen">
-        <div class="relative w-full h-full flex justify-center items-center">
-            <div class="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50">
-                {#if closable}
-                    <button
-                        class="absolute top-0 left-0 w-full h-full"
-                        title="Close {title}"
-                        on:click={() => visible = false}
-                    />
-                {/if}
-            </div>
-            <div class="z-20 border-zinc-800 border-2 bg-zinc-900">
-                <div class="border-zinc-800 border-b-2 px-2 py-1 text-white font-semibold flex justify-between items-center gap-4">
-                    <span>
-                        {title}
-                    </span>
-                    {#if closable}
-                        <button
-                            class="float-right"
-                            title="Close {title}"
-                            on:click={() => visible = false}
-                        >
-                            <LucideX />
-                        </button>
-                    {/if}
-                </div>
-                <div class="px-2 py-1">
-                    <slot />
-                </div>
+    <div class="modal fixed top-0 left-0 bottom-0 right-0
+    grid grid-cols-1 grid-rows-1">
+        <div class="modal-background -z-10 bg-black bg-opacity-30 shadow-vignette-heavy">
+            {#if closable}
+                <button class="w-full h-full" on:click={() => visible = false} aria-label="Close Modal" />
+            {/if}
+        </div>
+        <div class="modal-content flex justify-center items-center pointer-events-none p-8">
+            <div class="pointer-events-auto">
+                <slot />
             </div>
         </div>
     </div>

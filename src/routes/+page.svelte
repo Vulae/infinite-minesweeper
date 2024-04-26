@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { WorldRenderer } from "$lib/game/Renderer";
-    import { World } from "$lib/game/World";
+    import Game from "$components/Game.svelte";
+    import { resize } from "$lib/actions/Resize";
+    import { onMount } from "svelte";
     import LucideInfo from "lucide-svelte/icons/info";
     import Modal from "$components/Modal.svelte";
-    import Game from "$components/Game.svelte";
-    import { onMount } from "svelte";
+    import InfoModal from "$components/InfoModal.svelte";
 
     let saveSlot: string | null = null;
 
@@ -13,67 +13,50 @@
         saveSlot = url.searchParams.get('saveSlot') ?? 'save';
     });
 
-    let infoModalVisible: boolean = true;
+    let layout: 'vertical' | 'horizontal' = 'vertical';
+    let layoutSide: 'start' | 'end' = 'end';
 
-    let world: World;
-    let renderer: WorldRenderer;
-    let debugNumFrames: number = 0;
-    let debugFrameTime: number = 0;
+    let infoModalVisible: boolean = true;
 
 </script>
 
 <div class="w-screen h-screen grid grid-cols-1 grid-rows-1">
     <div class="w-full h-full col-start-1 col-end-1 row-start-1 row-end-1">
         {#if saveSlot}
-            <Game {saveSlot} bind:debugNumFrames bind:debugFrameTime on:worldChange={ev => world = ev.detail} on:rendererChange={ev => renderer = ev.detail} />
+            <Game {saveSlot} />
         {/if}
     </div>
-    <div class="w-full h-full col-start-1 col-end-1 row-start-1 row-end-1 pointer-events-none">
-        <div class="w-full h-full flex justify-between">
-            <div class="pointer-events-auto p-4 h-min">
+    <div
+        class="w-full h-full col-start-1 col-end-1 row-start-1 row-end-1 pointer-events-none"
+        use:resize={(width, height) => {
+            layout = (width > height) ? 'vertical' : 'horizontal';
+            layoutSide = (width > height) ? 'end' : 'start';
+        }}
+    >
+        <div
+            class="w-full h-full flex items-center p-4"
+            style:flex-direction={layout == 'vertical' ? 'row' : 'column'}
+            style:justify-content={layoutSide == 'start' ? 'start' : 'end'}
+        >
+            <div
+                class="pointer-events-auto flex items-center gap-2
+                rounded-full bg-white bg-opacity-30 backdrop-blur-md shadow-lg
+                text-white font-bold stroke-[3]"
+                style:flex-direction={layout == 'vertical' ? 'column' : 'row'}
+                style:padding={layout == 'vertical' ? '1rem 0.5rem' : '0.5rem 1rem'}
+            >
                 <button
-                    class="text-blue-500 bg-zinc-800 outline outline-black outline-1 rounded-full w-min flex items-center justify-center"
+                    class="rounded-full drop-shadow-sm"
                     on:click={() => infoModalVisible = true}
                 >
-                    <LucideInfo size={32} strokeWidth={3} />
+                    <LucideInfo />
                 </button>
-            </div>
-            <div class="pointer-events-auto p-4 h-min">
-                <div class="p-4 bg-zinc-800 bg-opacity-70 outline outline-zinc-600 rounded-lg">
-                    <div class="text-white font-bold">
-                        {#if world}
-                            <span>
-                                Seed: {world.seed}
-                            </span><br />
-                        {/if}
-                        <span>
-                            Frame {debugNumFrames}
-                            {Math.round(debugFrameTime * 10) / 10}ms
-                        </span>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-<Modal bind:visible={infoModalVisible} title="Information">
-    <span class=" text-white font-semibold font-segoe">
-        <h1 class="text-2xl">
-            <a href="https://vulae.github.io/infinite-minesweeper">Infinite Minesweeper</a>
-        </h1>
-        <h2 class="text-xl">CONTROLS</h2>
-        Left Click: Reveal tile
-        <br />
-        Right Click: Flag tile
-        <br />
-        Middle Click / Arrow Keys: Move view
-        <br />
-        Scroll Wheel: Zoom view
-        <br />
-        Open Bracket '[': Zoom In
-        <br />
-        Close Bracket ']': Zoom Out
-        <br />
-    </span>
+
+<Modal bind:visible={infoModalVisible}>
+    <InfoModal />
 </Modal>
