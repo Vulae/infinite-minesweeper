@@ -60,25 +60,20 @@ function weightIndex(weights: number[], value: number): number {
  * @returns Weight index
  */
 export function voronoi_noise2d(seed: number, x: number, y: number, weights: number[]): number {
-    let points: { x: number, y: number, type: number }[] = [];
-    for(let i = Math.floor(x) - 1; i < Math.ceil(x) + 1; i++) {
-        for(let j = Math.floor(y) - 1; j < Math.ceil(y) + 1; j++) {
-            points.push({
-                x: i + sfc_hash(seed, i, j, 0) - 0.5,
-                y: j + sfc_hash(seed, i, j, 1) - 0.5,
-                type: weightIndex(weights, sfc_hash(seed, i, j, 2))
-            });
-        }
-    }
-
     let closestDist = Infinity;
     let closestType = -1;
 
-    for(const point of points) {
-        const dist = Math.sqrt((point.x - x)**2 + (point.y - y)**2);
-        if(dist < closestDist) {
-            closestDist = dist;
-            closestType = point.type;
+    for (let i = Math.floor(x) - 1; i < Math.ceil(x) + 1; i++) {
+        for (let j = Math.floor(y) - 1; j < Math.ceil(y) + 1; j++) {
+            const pointX = i + sfc_hash(seed, i, j, 0) - 0.5;
+            const pointY = i + sfc_hash(seed, i, j, 1) - 0.5;
+
+            const dist = (pointX - x)**2 + (pointY - y)**2;
+
+            if(dist < closestDist) {
+                closestDist = dist;
+                closestType = weightIndex(weights, sfc_hash(seed, i, j, 2));
+            }
         }
     }
 
