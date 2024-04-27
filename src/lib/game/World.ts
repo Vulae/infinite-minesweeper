@@ -190,6 +190,7 @@ export class World extends EventDispatcher<{
 
     public save(): WorldSave {
         const obj: WorldSave = {
+            version: SAVE_VERSION,
             seed: this.seed,
             deaths: this.deaths,
             chunks: { }
@@ -206,6 +207,10 @@ export class World extends EventDispatcher<{
     }
 
     public static load(save: WorldSave): World {
+        if(save.version != SAVE_VERSION) {
+            throw new Error(`World.load: Failed to load, Version does not match. EXPECTED: ${SAVE_VERSION} GOT: ${save.version}`);
+        }
+
         const world = new World(save.seed);
         world._deaths = save.deaths;
 
@@ -223,7 +228,11 @@ export class World extends EventDispatcher<{
 
 }
 
+
+const SAVE_VERSION = 1;
+
 export type WorldSave = {
+    version: number;
     seed: number;
     deaths: number;
     chunks: {[key: ChunkCoordinate]: string};
