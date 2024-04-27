@@ -66,7 +66,7 @@ export function voronoi_noise2d(seed: number, x: number, y: number, weights: num
     for (let i = Math.floor(x) - 1; i < Math.ceil(x) + 1; i++) {
         for (let j = Math.floor(y) - 1; j < Math.ceil(y) + 1; j++) {
             const pointX = i + sfc_hash(seed, i, j, 0) - 0.5;
-            const pointY = i + sfc_hash(seed, i, j, 1) - 0.5;
+            const pointY = j + sfc_hash(seed, i, j, 1) - 0.5;
 
             const dist = (pointX - x)**2 + (pointY - y)**2;
 
