@@ -5,6 +5,8 @@
     import LucideInfo from "lucide-svelte/icons/info";
     import Modal from "$components/Modal.svelte";
     import InfoModal from "$components/InfoModal.svelte";
+    import { world } from "../store";
+    import LucideSkull from "lucide-svelte/icons/skull";
 
     let saveSlot: string | null = null;
 
@@ -17,6 +19,19 @@
     let layoutSide: 'start' | 'end' = 'end';
 
     let infoModalVisible: boolean = true;
+
+
+
+    let deaths: number | null;
+
+    $: if($world !== null) {
+        deaths = $world.deaths;
+        $world.addEventListener('die', () => {
+            deaths = $world.deaths;
+        });
+    } else {
+        deaths = null;
+    }
 
 </script>
 
@@ -48,9 +63,23 @@
                 <button
                     class="rounded-full drop-shadow-sm"
                     on:click={() => infoModalVisible = true}
+                    title="Information"
                 >
                     <LucideInfo />
                 </button>
+                {#if deaths !== null}
+                    <div class="w-full h-full bg-white rounded-full p-[1px]" />
+                    <div
+                        class="flex items-center"
+                        style:flex-direction={layout == 'horizontal' ? 'row' : 'column'}
+                        title="{deaths} deaths"
+                    >
+                        <LucideSkull />
+                        <span class="text-sm">
+                            {deaths}
+                        </span>
+                    </div>
+                {/if}
             </div>
         </div>
     </div>

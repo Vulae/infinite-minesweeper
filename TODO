@@ -44,5 +44,4 @@
 
 * [ ] Items
     * [ ] Reveal (Reveal 3x3 area and flag bombs)
-    * [ ] Cover (Cover up an exploded bomb)
     * [ ] Locate (Reveal nearest 0 tile that is covered)

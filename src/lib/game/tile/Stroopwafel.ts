@@ -2,6 +2,7 @@
 import type { BitIO } from "$lib/BitIO";
 import type { World } from "../World";
 import { SingleMineTile, SingleMineTileState } from "./SingleMine";
+import type { ValidTile } from "./Tile";
 import { waffle } from "./Waffle";
 
 
@@ -17,18 +18,8 @@ export class StroopwafelTile extends SingleMineTile {
         this.isDark = isDark
     }
 
-    public save(io: BitIO): void {
-        io.writeBits(2, this.state);
-    }
-
-    public static load(world: World, x: number, y: number, io: BitIO): StroopwafelTile {
-        const tile = new StroopwafelTile(world, x, y);
-        switch(io.readBits(2)) {
-            case SingleMineTileState.Covered: break;
-            case SingleMineTileState.Flagged: tile.flag(); break;
-            case SingleMineTileState.Revealed: tile.reveal(); break;
-        }
-        return tile;
+    public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
+        return this.loadInternal(this, world, x, y, io);
     }
 }
 

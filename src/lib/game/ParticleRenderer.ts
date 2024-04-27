@@ -40,7 +40,7 @@ export class ParticleRenderer {
         }));
         this.listeners.push(this.world.addEventListener('particle_explosion', ({ data: { x, y } }) => {
             const tile = this.world.getTile(x, y);
-            this.particles.push(new ParticleFakeTile(tile));
+            this.particles.unshift(new ParticleFakeTile(tile));
             this.particles.push(new ParticleExplosion(tile));
         }));
         this.listeners.push(this.world.addEventListener('particle_reveal', ({ data: { x, y } }) => {

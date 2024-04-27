@@ -5,7 +5,7 @@
     import Renderer from "./Renderer.svelte";
     import type { Theme } from "$lib/game/theme/Theme";
     import { ThemeRetro } from "$lib/game/theme/retro";
-    import { volume } from "../store";
+    import { volume, world as worldStore } from "../store";
 
     export let saveSlot: string;
     let world: World;
@@ -16,6 +16,7 @@
     onMount(async () => {
         await theme.init();
         world = load(saveSlot);
+        $worldStore = world;
 
         world.addEventListener('sound_unflag', () => {
             theme.playSound('unflag');
@@ -39,6 +40,7 @@
 
 <svelte:window
     on:beforeunload={() => {
+        $worldStore = null;
         save(saveSlot, world);
     }}
 />

@@ -40,10 +40,14 @@ export class World extends EventDispatcher<{
     'particle_unflag': { x: number, y: number };
     'particle_explosion': { x: number, y: number };
     'particle_reveal': { x: number, y: number };
+    'die': { x: number, y: number };
 }> {
     public readonly seed: number;
     public readonly tileSeed: number;
     public readonly biomeSeed: number;
+
+    protected _deaths: number = 0;
+    public get deaths(): number { return this._deaths; }
 
     constructor(seed: number) {
         super();
@@ -51,6 +55,7 @@ export class World extends EventDispatcher<{
         const rng = splitmix32(this.seed, false);
         this.tileSeed = rng();
         this.biomeSeed = rng();
+        this.addEventListener('die', () => this._deaths++);
     }
 
     private chunks: {[key: ChunkCoordinate]: GeneratedChunk} = {};
@@ -102,6 +107,7 @@ export class World extends EventDispatcher<{
             if(tile.numMines() > 0) {
                 this._died = true;
                 this.dispatchEvent('particle_explosion', { x: tile.x, y: tile.y });
+                this.dispatchEvent('die', { x: tile.x, y: tile.y });
                 return;
             } else {
                 this.dispatchEvent('particle_reveal', { x: tile.x, y: tile.y });
@@ -138,6 +144,7 @@ export class World extends EventDispatcher<{
                 if(r.numMines() > 0) {
                     this._died = true;
                     this.dispatchEvent('particle_explosion', { x: r.x, y: r.y });
+                    this.dispatchEvent('die', { x: tile.x, y: tile.y });
                 } else {
                     this.dispatchEvent('particle_reveal', { x: r.x, y: r.y });
                 }
@@ -184,6 +191,7 @@ export class World extends EventDispatcher<{
     public save(): WorldSave {
         const obj: WorldSave = {
             seed: this.seed,
+            deaths: this.deaths,
             chunks: { }
         };
 
@@ -199,6 +207,7 @@ export class World extends EventDispatcher<{
 
     public static load(save: WorldSave): World {
         const world = new World(save.seed);
+        world._deaths = save.deaths;
 
         for(const _chunkCoord in save.chunks) {
             const chunkCoord = _chunkCoord as ChunkCoordinate;
@@ -216,5 +225,6 @@ export class World extends EventDispatcher<{
 
 export type WorldSave = {
     seed: number;
+    deaths: number;
     chunks: {[key: ChunkCoordinate]: string};
 }
