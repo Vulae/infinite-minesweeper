@@ -1,6 +1,7 @@
 
 import type { BitIO } from "$lib/BitIO";
 import type { World } from "../World";
+import type { BlueberryTile } from "./Blueberry";
 import type { ChocolateTile } from "./Chocolate";
 import type { StroopwafelTile } from "./Stroopwafel";
 import type { VanillaTile } from "./Vanilla";
@@ -80,8 +81,8 @@ export abstract class Tile {
 
 // TODO: Probably rename above to TileBase and rename below type to just Tile.
 // TODO: Swap name around, eg: VanillaTile -> TileVanilla
-export type ValidTile = VanillaTile | ChocolateTile | WaffleTile | StroopwafelTile;
+export type ValidTile = VanillaTile | ChocolateTile | WaffleTile | StroopwafelTile | BlueberryTile;
 // FIXME: This is dumb, why not `typeof ArrayElement<ValidTile>`
-export type ValidTileConstructor = typeof VanillaTile | typeof ChocolateTile | typeof WaffleTile | typeof StroopwafelTile;
+export type ValidTileConstructor = typeof VanillaTile | typeof ChocolateTile | typeof WaffleTile | typeof StroopwafelTile | typeof BlueberryTile;
 
 

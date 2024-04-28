@@ -3,7 +3,7 @@
     import LucideChevronLeft from "lucide-svelte/icons/chevron-left";
     import LucideChevronRight from "lucide-svelte/icons/chevron-right";
 
-    const biomeNames = [ 'Vanilla', 'Chocolate', 'Waffle', 'Stroopwafel' ] as const;
+    const biomeNames = [ 'Vanilla', 'Chocolate', 'Waffle', 'Stroopwafel', 'Blueberry' ] as const;
     let currentBiome: ArrayElement<typeof biomeNames> = 'Vanilla';
 
     function newBiome(dir: 'next' | 'prev'): void {
@@ -91,8 +91,7 @@
                 <div class="biome-content">
                     <h2 class="biome-title">Chocolate</h2>
                     <div class="biome-description">
-                        The standard Minesweeper rules.
-                        <br />
+                        The standard Minesweeper rules.<br />
                         Much more mines than Vanilla biome.
                     </div>
                 </div>
@@ -118,6 +117,16 @@
                         3x3 checkers of tiles.<br />
                         Dark checkered sections have 8 mines.<br />
                         Light checkered sections have 1 mine.
+                    </div>
+                </div>
+            </div>
+        {:else if currentBiome == 'Blueberry'}
+            <div class="biome">
+                <img class="biome-backdrop" src="/infinite-minesweeper/biome_blueberry_screenshot.png" alt="Blueberry Biome Screenshot">
+                <div class="biome-content">
+                    <h2 class="biome-title">Blueberry</h2>
+                    <div class="biome-description">
+                        Tiles may have up to 3 mines.
                     </div>
                 </div>
             </div>

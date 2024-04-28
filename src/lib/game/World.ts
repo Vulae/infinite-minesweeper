@@ -229,7 +229,7 @@ export class World extends EventDispatcher<{
 }
 
 
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
 export type WorldSave = {
     version: number;

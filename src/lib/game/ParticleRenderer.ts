@@ -8,6 +8,7 @@ import { ParticleFlag } from "./particle/Flag";
 import type { ValidParticle } from "./particle/Particle";
 import { ParticleTileReveal } from "./particle/TileReveal";
 import type { Theme } from "./theme/Theme";
+import { MultiMineTile } from "./tile/MultiMine";
 
 
 
@@ -36,7 +37,12 @@ export class ParticleRenderer {
 
     public async init(): Promise<void> {
         this.listeners.push(this.world.addEventListener('particle_unflag', ({ data: { x, y } }) => {
-            this.particles.push(new ParticleFlag(x, y));
+            const tile = this.world.getTile(x, y);
+            if(tile instanceof MultiMineTile) {
+                this.particles.push(new ParticleFlag(x, y, true, tile.numMaxMines));
+            } else {
+                this.particles.push(new ParticleFlag(x, y, false, 1));
+            }
         }));
         this.listeners.push(this.world.addEventListener('particle_explosion', ({ data: { x, y } }) => {
             const tile = this.world.getTile(x, y);

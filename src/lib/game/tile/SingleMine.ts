@@ -1,7 +1,7 @@
 
 import type { BitIO } from "$lib/BitIO";
 import type { World } from "../World";
-import { Tile, type ValidTile, type ValidTileConstructor } from "./Tile";
+import { Tile, type ValidTile } from "./Tile";
 
 export enum SingleMineTileState {
     Covered,
@@ -46,7 +46,7 @@ export abstract class SingleMineTile extends Tile {
         if(!this.isMine) {
             this.state = SingleMineTileState.Revealed;
         } else {
-            this.flag();
+            this.state = SingleMineTileState.Flagged;
         }
         return true;
     }
@@ -61,16 +61,11 @@ export abstract class SingleMineTile extends Tile {
         }
     }
 
-    protected static loadInternal<C extends ValidTileConstructor>(constructor: C, world: World, x: number, y: number, io: BitIO): ValidTile {
-        const tile = new constructor(world, x, y);
+    protected static loadInternal<T extends SingleMineTile>(tile: T, io: BitIO): T {
         if(tile.isMine) {
-            if(io.readBit()) tile.flag();
+            tile.state = io.readBit() ? SingleMineTileState.Flagged : SingleMineTileState.Covered;
         } else {
-            switch(io.readBits(2)) {
-                case SingleMineTileState.Covered: break;
-                case SingleMineTileState.Flagged: tile.flag(); break;
-                case SingleMineTileState.Revealed: tile.reveal(); break;
-            }
+            tile.state = io.readBits(2);
         }
         return tile;
     }

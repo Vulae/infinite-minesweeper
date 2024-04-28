@@ -20,7 +20,10 @@ export class ParticleFlag extends Particle {
         return clampNormal(1 - (this.lifetime / 250) + 0.5);
     }
 
-    public constructor(x: number, y: number) {
+    public readonly isMultiFlag: boolean;
+    public readonly numFlags: number;
+
+    public constructor(x: number, y: number, isMultiFlag: boolean, numFlags: number) {
         super();
         this.x = x;
         this.y = y;
@@ -28,6 +31,8 @@ export class ParticleFlag extends Particle {
         this.dy = -(Math.random() * 0.002 + 0.005);
         this.r = 0;
         this.dr = (Math.random() - 0.5) * 0.01;
+        this.isMultiFlag = isMultiFlag;
+        this.numFlags = numFlags;
     }
 
     public update(renderer: ParticleRenderer, dt: number): void {

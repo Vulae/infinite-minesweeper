@@ -66,3 +66,15 @@ export class BitIO {
 }
 
 
+
+/**
+ * @param value UNSIGNED VALUE
+ */
+export function bitsToRepresentValue(value: number): number {
+    let count = 0;
+    while(value) {
+        value &= value - 1;
+        count++;
+    }
+    return count;
+}

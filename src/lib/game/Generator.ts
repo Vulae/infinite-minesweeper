@@ -1,9 +1,10 @@
 
 import { perlin_noise2d, splitmix32, voronoi_noise2d } from "../RNG";
 import type { World } from "./World";
+import { BlueberryTile } from "./tile/Blueberry";
 import { ChocolateTile } from "./tile/Chocolate";
 import { StroopwafelTile } from "./tile/Stroopwafel";
-import type { Tile, ValidTile, ValidTileConstructor } from "./tile/Tile";
+import type { ValidTile, ValidTileConstructor } from "./tile/Tile";
 import { VanillaTile } from "./tile/Vanilla";
 import { WaffleTile } from "./tile/Waffle";
 
@@ -54,6 +55,10 @@ const Biomes: Biome = {
             weight: 2,
             tile: StroopwafelTile
         }]
+    }, {
+        type: 'biome',
+        weight: 1,
+        tile: BlueberryTile
     }]
 };
 

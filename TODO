@@ -11,6 +11,7 @@
 * [ ] Theme picker
     * [ ] Modern theme (Flat style graphics)
     * [ ] SeaBear1015 theme (https://github.com/Vulae/infinite-minesweeper/issues/4)
+* [ ] Retro theme: Replace number placeholders
 
 * [ ] Extreme zoom out
     * (Zoom out very far, stop rendering individual tiles and just render biome colors)
@@ -35,7 +36,7 @@
 * [X] Biomes
     * [X] Vanilla (Normal minesweeper)
     * [X] Chocolate (Vanilla with extra mines)
-    * [ ] Blueberry (Minesweeper, up to 3 mines on a tile)
+    * [X] Blueberry (Minesweeper, up to 3 mines on a tile)
     * [ ] Blueberry Chocolate (Blueberry with extra mines)
     * [X] Waffle (2x2 checkers of tiles, dark sections have 3 mines, light sections have 1 mine)
     * [X] Stroopwafel (3x3 checkers of tiles, dark sections have 8 mines, light sections have 1 mine)

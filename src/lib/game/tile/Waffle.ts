@@ -1,7 +1,7 @@
 
 import type { BitIO } from "$lib/BitIO";
 import type { World } from "../World";
-import { SingleMineTile, SingleMineTileState } from "./SingleMine";
+import { SingleMineTile } from "./SingleMine";
 import { sfc_hash } from "$lib/RNG";
 import type { ValidTile } from "./Tile";
 
@@ -44,7 +44,7 @@ export class WaffleTile extends SingleMineTile {
     }
     
     public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
-        return this.loadInternal(this, world, x, y, io);
+        return this.loadInternal(new WaffleTile(world, x, y), io);
     }
 }
 

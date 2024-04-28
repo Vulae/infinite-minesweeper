@@ -2,7 +2,7 @@
 import type { BitIO } from "$lib/BitIO";
 import { sfc_hash } from "$lib/RNG";
 import type { World } from "../World";
-import { SingleMineTile, SingleMineTileState } from "./SingleMine";
+import { SingleMineTile } from "./SingleMine";
 import type { ValidTile } from "./Tile";
 
 
@@ -16,7 +16,7 @@ export class ChocolateTile extends SingleMineTile {
     }
 
     public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
-        return this.loadInternal(this, world, x, y, io);
+        return this.loadInternal(new ChocolateTile(world, x, y), io);
     }
 }
 
