@@ -7,22 +7,15 @@ import type { ValidTile } from "./Tile";
 
 
 
-const mineIndices: number[] = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    1, 1,
-    2, 2,
-    3
-];
-
-
-
 export class BlueberryTile extends MultiMineTile {
     public readonly type: 'blueberry' = 'blueberry';
 
     public readonly numMaxMines: number = 3;
 
     public constructor(world: World, x: number, y: number) {
-        const numMines = mineIndices[Math.floor(sfc_hash(world.tileSeed, x, y, 1) * mineIndices.length)];
+        const numMines = (sfc_hash(world.tileSeed, x, y, 0) > 0.80) ?
+            (Math.floor(sfc_hash(world.tileSeed, x, y, 1) * 4) + 1)
+            : 0;
         super(world, x, y, numMines);
     }
 

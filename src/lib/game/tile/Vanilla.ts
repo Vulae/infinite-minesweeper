@@ -11,7 +11,7 @@ export class VanillaTile extends SingleMineTile {
     public readonly type: 'vanilla' = 'vanilla';
 
     public constructor(world: World, x: number, y: number) {
-        const isMine = sfc_hash(world.tileSeed, x, y, 0) > 0.875;
+        const isMine = sfc_hash(world.tileSeed, x, y, 0) > 0.85;
         super(world, x, y, isMine);
     }
 
