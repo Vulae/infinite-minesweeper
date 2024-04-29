@@ -14,7 +14,7 @@ import { Theme, type SoundEffect } from "./Theme";
 
 export class ThemeRetro extends Theme {
 
-    private readonly tileset = new TextureAtlas('/infinite-minesweeper/retro/tileset.png', {
+    private tileset = new TextureAtlas('/infinite-minesweeper/retro/tileset.png', {
         null: [ 0, 0, 16, 16 ],
         bomb: [ 16, 0, 16, 16 ],
         explosion1: [ 16, 16, 16, 16 ],
@@ -68,6 +68,8 @@ export class ThemeRetro extends Theme {
 
     public async init(): Promise<void> {
         await this.tileset.awaitLoad();
+        // Repack tileset (To prevent texture bleeding)
+        this.tileset = this.tileset.toImageDataAtlas().toImageAtlas(true);
     }
 
 
