@@ -1,6 +1,7 @@
 
 import { Base64 } from "js-base64";
 import { World } from "./World";
+import * as b from "$lib/BinType";
 
 
 
@@ -22,7 +23,7 @@ export function load(saveSlot: string): World {
     } else {
         console.log('Loaded saved world');
         try {
-            return World.load(Base64.toUint8Array(str).buffer);
+            return World.load(F_SAVE.fromBase64(str));
         } catch(err) {
             console.error('Failed to load world.');
             console.error(err);
@@ -36,7 +37,7 @@ export function save(saveSlot: string, world: World): void {
     if(localStorage.getItem(saveSlot) !== null) {
         console.log('Save world');
         try {
-            localStorage.setItem(saveSlot, Base64.fromUint8Array(new Uint8Array(world.save())));
+            localStorage.setItem(saveSlot, F_SAVE.toBase64(world.save()));
             localStorage.removeItem('save_error');
         } catch(err) {
             localStorage.setItem('save_error', String(err));
@@ -47,5 +48,20 @@ export function save(saveSlot: string, world: World): void {
 export function clear(saveSlot: string): void {
     localStorage.removeItem(saveSlot);
 }
+
+
+
+
+
+export const F_CHUNK = b.object({
+    tiles: b.binary()
+});
+
+export const F_SAVE = b.packed(b.object({
+    seed: b.number('u32'),
+    createdAt: b.date(),
+    numDeaths: b.number('u32'),
+    chunks: b.record(b.string(), F_CHUNK)
+}), true);
 
 

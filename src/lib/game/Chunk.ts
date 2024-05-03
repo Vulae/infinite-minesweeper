@@ -4,6 +4,8 @@ import { CHUNK_SIZE } from "./Constants";
 import { generateTile, getTileType } from "./Generator";
 import type { World } from "./World";
 import type { ValidTile } from "./tile/Tile";
+import * as b from "$lib/BinType";
+import type { F_CHUNK } from "./Save";
 
 
 
@@ -74,6 +76,10 @@ export class GeneratedChunk extends Chunk {
 
 
 
+    public deaths: { x: number, y: number, diedAt: Date }[] = [];
+
+
+    
     public encodeTiles(): ArrayBuffer {
         const io = new BitIO(2048);
         for(const tile of this.tiles) {
@@ -96,8 +102,19 @@ export class GeneratedChunk extends Chunk {
         }
         return new GeneratedChunk(world, chunkX, chunkY, tiles);
     }
+
+
+
+    public save(): b.ParserType<typeof F_CHUNK> {
+        return {
+            tiles: this.encodeTiles()
+        };
+    }
+
+    public static load(world: World, chunkX: number, chunkY: number, savedChunk: b.ParserType<typeof F_CHUNK>): GeneratedChunk {
+        const chunk = GeneratedChunk.decodeTiles(world, chunkX, chunkY, savedChunk.tiles);
+        return chunk;
+    }
 }
-
-
 
 

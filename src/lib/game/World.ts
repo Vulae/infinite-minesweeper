@@ -6,6 +6,7 @@ import { splitmix32 } from "../RNG";
 import type { ValidTile } from "./tile/Tile";
 import { EventDispatcher } from "$lib/EventDispatcher";
 import * as b from "$lib/BinType";
+import { F_SAVE } from "./Save";
 
 
 
@@ -191,8 +192,8 @@ export class World extends EventDispatcher<{
 
 
 
-    public save(): ArrayBuffer {
-        const saveObj: b.ParserType<typeof F_SAVE> = {
+    public save(): b.ParserType<typeof F_SAVE> {
+        const obj: b.ParserType<typeof F_SAVE> = {
             seed: this.seed,
             createdAt: this.createdAt,
             numDeaths: this.deaths,
@@ -202,17 +203,13 @@ export class World extends EventDispatcher<{
         for(const _chunkCoord in this.chunks) {
             const chunkCoord = _chunkCoord as ChunkCoordinate;
             const chunk = this.chunks[chunkCoord];
-            saveObj.chunks[chunkCoord] = {
-                tiles: chunk.encodeTiles()
-            };
+            obj.chunks[chunkCoord] = chunk.save();
         }
 
-        return F_SAVE.toBinary(saveObj);
+        return obj;
     }
 
-    public static load(saveBinary: ArrayBuffer): World {
-        const save = F_SAVE.fromBinary(saveBinary);
-
+    public static load(save: b.ParserType<typeof F_SAVE>): World {
         const world = new World(save.seed);
         world._createdAt = save.createdAt;
         world._deaths = save.numDeaths;
@@ -229,16 +226,5 @@ export class World extends EventDispatcher<{
     }
 
 }
-
-
-
-const F_SAVE = b.packed(b.object({
-    seed: b.number('u32'),
-    createdAt: b.date(),
-    numDeaths: b.number('u32'),
-    chunks: b.record(b.string(), b.object({
-        tiles: b.binary()
-    }))
-}), true);
 
 
