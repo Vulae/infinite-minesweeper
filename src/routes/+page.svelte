@@ -41,8 +41,10 @@
             <Game {saveSlot} />
         {/if}
     </div>
+    <!-- TODO: transition-opacity, the backdrop blur breaks when opacity is less than 1, So the blur needs to be done another way. -->
     <div
         class="w-full h-full col-start-1 col-end-1 row-start-1 row-end-1 pointer-events-none"
+        style:opacity={infoModalVisible ? 0 : 1}
         use:resize={(width, height) => {
             layout = (width > height) ? 'vertical' : 'horizontal';
             layoutSide = (width > height) ? 'end' : 'start';

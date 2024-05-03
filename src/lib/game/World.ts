@@ -3,9 +3,9 @@ import { Chunk, GeneratedChunk } from "./Chunk";
 import { CHUNK_SIZE } from "./Constants";
 import { generateTile } from "./Generator";
 import { splitmix32 } from "../RNG";
-import { Base64 } from "js-base64";
 import type { ValidTile } from "./tile/Tile";
 import { EventDispatcher } from "$lib/EventDispatcher";
+import * as b from "$lib/BinType";
 
 
 
@@ -46,12 +46,15 @@ export class World extends EventDispatcher<{
     public readonly tileSeed: number;
     public readonly biomeSeed: number;
 
+    protected _createdAt: Date = new Date();
+    public get createdAt(): Date { return this._createdAt; }
+
     protected _deaths: number = 0;
     public get deaths(): number { return this._deaths; }
 
     constructor(seed: number) {
         super();
-        this.seed = seed;
+        this.seed = (seed & 0xFFFFFFFF) >>> 0;
         const rng = splitmix32(this.seed, false);
         this.tileSeed = rng();
         this.biomeSeed = rng();
@@ -188,39 +191,38 @@ export class World extends EventDispatcher<{
 
 
 
-    public save(): WorldSave {
-        const obj: WorldSave = {
-            version: SAVE_VERSION,
+    public save(): ArrayBuffer {
+        const saveObj: b.ParserType<typeof F_SAVE> = {
             seed: this.seed,
-            deaths: this.deaths,
+            createdAt: this.createdAt,
+            numDeaths: this.deaths,
             chunks: { }
         };
 
         for(const _chunkCoord in this.chunks) {
             const chunkCoord = _chunkCoord as ChunkCoordinate;
             const chunk = this.chunks[chunkCoord];
-            const buffer = chunk.save();
-            obj.chunks[chunkCoord] = Base64.fromUint8Array(new Uint8Array(buffer));
+            saveObj.chunks[chunkCoord] = {
+                tiles: chunk.encodeTiles()
+            };
         }
 
-        return obj;
+        return F_SAVE.toBinary(saveObj);
     }
 
-    public static load(save: WorldSave): World {
-        if(save.version != SAVE_VERSION) {
-            throw new Error(`World.load: Failed to load, Version does not match. EXPECTED: ${SAVE_VERSION} GOT: ${save.version}`);
-        }
+    public static load(saveBinary: ArrayBuffer): World {
+        const save = F_SAVE.fromBinary(saveBinary);
 
         const world = new World(save.seed);
-        world._deaths = save.deaths;
+        world._createdAt = save.createdAt;
+        world._deaths = save.numDeaths;
 
         for(const _chunkCoord in save.chunks) {
             const chunkCoord = _chunkCoord as ChunkCoordinate;
-            const chunk = save.chunks[chunkCoord];
-            const buffer = Base64.toUint8Array(chunk).buffer;
             const [ _, chunkXstr, chunkYstr ] = chunkCoord.match(/^(-?\d+),(-?\d+)$/)!;
             const [ chunkX, chunkY ] = [ parseInt(chunkXstr), parseInt(chunkYstr) ];
-            world.chunks[chunkCoord] = GeneratedChunk.load(world, chunkX, chunkY, buffer);
+            const chunk = save.chunks[chunkCoord];
+            world.chunks[chunkCoord] = GeneratedChunk.decodeTiles(world, chunkX, chunkY, chunk.tiles);
         }
 
         return world;
@@ -229,11 +231,14 @@ export class World extends EventDispatcher<{
 }
 
 
-const SAVE_VERSION = 3;
 
-export type WorldSave = {
-    version: number;
-    seed: number;
-    deaths: number;
-    chunks: {[key: ChunkCoordinate]: string};
-}
+const F_SAVE = b.packed(b.object({
+    seed: b.number('u32'),
+    createdAt: b.date(),
+    numDeaths: b.number('u32'),
+    chunks: b.record(b.string(), b.object({
+        tiles: b.binary()
+    }))
+}), true);
+
+
