@@ -1,5 +1,6 @@
 
 import type { BitIO } from "$lib/BitIO";
+import { CHUNK_SIZE } from "../Constants";
 import type { World } from "../World";
 import type { BlueberryTile } from "./Blueberry";
 import type { ChocolateTile } from "./Chocolate";
@@ -68,6 +69,16 @@ export abstract class Tile {
      * @returns If tile was revealed
      */
     public abstract reveal(): boolean;
+
+    /**
+     * If player has died on this tile.
+     */
+    public isDeathTile(): boolean {
+        const chunk = this.world.getGeneratedChunk(Math.floor(this.x / CHUNK_SIZE), Math.floor(this.y / CHUNK_SIZE));
+        const chunkPosX = this.x - chunk.chunkX * CHUNK_SIZE;
+        const chunkPosY = this.y - chunk.chunkY * CHUNK_SIZE;
+        return chunk.deaths.some(death => death.x == chunkPosX && death.y == chunkPosY);
+    }
 
 
 

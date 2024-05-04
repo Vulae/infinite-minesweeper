@@ -16,6 +16,7 @@ export class ThemeRetro extends Theme {
 
     private tileset = new TextureAtlas('/infinite-minesweeper/retro/tileset.png', {
         null: [ 0, 0, 16, 16 ],
+        skull: [ 0, 16, 16, 16 ],
         bomb: [ 16, 0, 16, 16 ],
         explosion1: [ 16, 16, 16, 16 ],
         explosion2: [ 16, 32, 16, 16 ],
@@ -169,13 +170,15 @@ export class ThemeRetro extends Theme {
     }
 
     public drawTile(ctx: CanvasRenderingContext2D, tile: ValidTile): void {
+        ctx.save();
+        ctx.translate(tile.x, tile.y);
         this.drawForcedTile(ctx, tile, false);
+        ctx.restore();
     }
     
 
 
     public drawParticle(ctx: CanvasRenderingContext2D, particle: ValidParticle): void {
-
         ctx.save();
 
         switch(particle.type) {
@@ -211,7 +214,10 @@ export class ThemeRetro extends Theme {
 
         ctx.globalAlpha = 1;
         ctx.restore();
+    }
 
+    public drawDeathIcon(ctx: CanvasRenderingContext2D, tileX: number, tileY: number): void {
+        this.tileset.draw(ctx, 'skull', tileX, tileY, 1, 1);
     }
 
 

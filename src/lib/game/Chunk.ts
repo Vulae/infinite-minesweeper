@@ -49,6 +49,7 @@ export class Chunk {
 
 export class GeneratedChunk extends Chunk {
     public readonly tiles: ValidTile[];
+    public deaths: { x: number, y: number, diedAt: Date }[] = [];
 
     public constructor(world: World, chunkX: number, chunkY: number, tiles: ValidTile[]) {
         super(world, chunkX, chunkY);
@@ -73,10 +74,6 @@ export class GeneratedChunk extends Chunk {
     public resetTile(chunkTileX: number, chunkTileY: number): void {
         this.tiles[chunkTileX + chunkTileY * CHUNK_SIZE] = generateTile(this.world, this.chunkX * CHUNK_SIZE + chunkTileX, this.chunkY * CHUNK_SIZE + chunkTileY);
     }
-
-
-
-    public deaths: { x: number, y: number, diedAt: Date }[] = [];
 
 
     
@@ -107,12 +104,14 @@ export class GeneratedChunk extends Chunk {
 
     public save(): b.ParserType<typeof F_CHUNK> {
         return {
+            deaths: this.deaths,
             tiles: this.encodeTiles()
         };
     }
 
     public static load(world: World, chunkX: number, chunkY: number, savedChunk: b.ParserType<typeof F_CHUNK>): GeneratedChunk {
         const chunk = GeneratedChunk.decodeTiles(world, chunkX, chunkY, savedChunk.tiles);
+        chunk.deaths = savedChunk.deaths;
         return chunk;
     }
 }

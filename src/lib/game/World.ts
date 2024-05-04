@@ -47,11 +47,8 @@ export class World extends EventDispatcher<{
     public readonly tileSeed: number;
     public readonly biomeSeed: number;
 
-    protected _createdAt: Date = new Date();
-    public get createdAt(): Date { return this._createdAt; }
-
-    protected _deaths: number = 0;
-    public get deaths(): number { return this._deaths; }
+    public createdAt: Date = new Date();
+    public deaths: number = 0;
 
     constructor(seed: number) {
         super();
@@ -59,7 +56,16 @@ export class World extends EventDispatcher<{
         const rng = splitmix32(this.seed, false);
         this.tileSeed = rng();
         this.biomeSeed = rng();
-        this.addEventListener('die', () => this._deaths++);
+        this.addEventListener('die', ({ data: { x, y } }) => {
+            this.deaths++;
+            
+            const deathChunk = this.getGeneratedChunk(Math.floor(x / CHUNK_SIZE), Math.floor(y / CHUNK_SIZE));
+            deathChunk.deaths.push({
+                x: x - (deathChunk.chunkX * CHUNK_SIZE),
+                y: y - (deathChunk.chunkY * CHUNK_SIZE),
+                diedAt: new Date()
+            });
+        });
     }
 
     private chunks: {[key: ChunkCoordinate]: GeneratedChunk} = {};
@@ -93,6 +99,7 @@ export class World extends EventDispatcher<{
 
     public flag(x: number, y: number): void {
         const tile = this.getTile(x, y);
+        if(tile.isDeathTile()) return;
         const prevNumFlags = tile.numFlags();
         tile.flag();
         const currentNumFlags = tile.numFlags();
@@ -211,15 +218,15 @@ export class World extends EventDispatcher<{
 
     public static load(save: b.ParserType<typeof F_SAVE>): World {
         const world = new World(save.seed);
-        world._createdAt = save.createdAt;
-        world._deaths = save.numDeaths;
+        world.createdAt = save.createdAt;
+        world.deaths = save.numDeaths;
 
         for(const _chunkCoord in save.chunks) {
             const chunkCoord = _chunkCoord as ChunkCoordinate;
             const [ _, chunkXstr, chunkYstr ] = chunkCoord.match(/^(-?\d+),(-?\d+)$/)!;
             const [ chunkX, chunkY ] = [ parseInt(chunkXstr), parseInt(chunkYstr) ];
-            const chunk = save.chunks[chunkCoord];
-            world.chunks[chunkCoord] = GeneratedChunk.decodeTiles(world, chunkX, chunkY, chunk.tiles);
+            const savedChunk = save.chunks[chunkCoord];
+            world.chunks[chunkCoord] = GeneratedChunk.load(world, chunkX, chunkY, savedChunk);
         }
 
         return world;

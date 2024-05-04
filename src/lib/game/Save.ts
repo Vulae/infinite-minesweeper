@@ -54,6 +54,11 @@ export function clear(saveSlot: string): void {
 
 
 export const F_CHUNK = b.object({
+    deaths: b.array(b.object({
+        x: b.number('u8'),
+        y: b.number('u8'),
+        diedAt: b.date()
+    })),
     tiles: b.binary()
 });
 

@@ -13,6 +13,7 @@ export abstract class Theme {
     public abstract init(): Promise<void>;
     public abstract drawTile(ctx: CanvasRenderingContext2D, tile: ValidTile): void;
     public abstract drawParticle(ctx: CanvasRenderingContext2D, particle: ValidParticle): void;
+    public abstract drawDeathIcon(ctx: CanvasRenderingContext2D, tileX: number, tileY: number): void;
 
     public abstract readonly soundEffects: {[key in SoundEffect]: { src: string, variation: number }};
     public volume: number = 1;

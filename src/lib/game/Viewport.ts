@@ -1,5 +1,8 @@
 
+import type { GeneratedChunk } from "./Chunk";
+import { CHUNK_SIZE } from "./Constants";
 import type { World } from "./World";
+import type { ValidTile } from "./tile/Tile";
 
 
 
@@ -95,6 +98,31 @@ export class Viewport {
     public transformCtx(ctx: CanvasRenderingContext2D): void {
         ctx.scale(this.cameraZoom, this.cameraZoom);
         ctx.translate(-this.cameraX, -this.cameraY);
+    }
+
+    public forEachTileInViewport(callbackfn: (tile: ValidTile) => void, margin: number = 0): void {
+        const bounds = this.cameraBounds(margin);
+        for(let x = bounds.minX; x < bounds.maxX; x++) {
+            for(let y = bounds.minY; y < bounds.maxY; y++) {
+                const tile = this.world.getTile(x, y);
+                callbackfn(tile);
+            }
+        }
+    }
+
+    public forEachChunkInViewport(callbackfn: (chunk: GeneratedChunk) => void, margin: number = 0): void {
+        const bounds = this.cameraBounds(margin);
+        bounds.minX = Math.floor(bounds.minX / CHUNK_SIZE);
+        bounds.minY = Math.floor(bounds.minY / CHUNK_SIZE);
+        bounds.maxX = Math.ceil(bounds.maxX / CHUNK_SIZE);
+        bounds.maxY = Math.ceil(bounds.maxY / CHUNK_SIZE);
+        for(let x = bounds.minX; x < bounds.maxX; x++) {
+            for(let y = bounds.minY; y < bounds.maxY; y++) {
+                const chunk = this.world.getChunk(x, y);
+                if(!chunk.isGenerated()) continue;
+                callbackfn(chunk);
+            }
+        }
     }
 
 }

@@ -1,4 +1,5 @@
 
+import { CHUNK_SIZE } from "./Constants";
 import type { Viewport } from "./Viewport";
 import type { World } from "./World";
 import type { Theme } from "./theme/Theme";
@@ -32,23 +33,18 @@ export class WorldRenderer {
         this.ctx.imageSmoothingEnabled = false;
         this.viewport.transformCtx(this.ctx);
 
-        const bounds = this.viewport.cameraBounds(1);
-        for(let x = bounds.minX; x < bounds.maxX; x++) {
-            for(let y = bounds.minY; y < bounds.maxY; y++) {
-                this.ctx.save();
-                this.ctx.translate(x, y);
-                // We need to oversize each tile to prevent gaps between tiles due to fp precision loss.
-                // TODO: Dynamically set this based on cameraZoom
-                // this.ctx.translate(0.5, 0.5);
-                // this.ctx.scale(1.01, 1.01);
-                // this.ctx.translate(-0.5, -0.5);
+        // Render tiles
+        this.viewport.forEachTileInViewport(tile => {
+            this.theme.drawTile(this.ctx, tile);
+        }, 0);
 
-                const tile = this.world.getTile(x, y);
-                this.theme.drawTile(this.ctx, tile);
+        // Render death icons
+        this.viewport.forEachChunkInViewport(chunk => {
+            chunk.deaths.forEach(death => {
+                this.theme.drawDeathIcon(this.ctx, chunk.chunkX * CHUNK_SIZE + death.x, chunk.chunkY * CHUNK_SIZE + death.y);
+            });
+        }, 0);
 
-                this.ctx.restore();
-            }
-        }
         this.ctx.imageSmoothingEnabled = true;
     }
 
