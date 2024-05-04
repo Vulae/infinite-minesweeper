@@ -155,7 +155,7 @@ export class World extends EventDispatcher<{
                 if(r.numMines() > 0) {
                     this._died = true;
                     this.dispatchEvent('particle_explosion', { x: r.x, y: r.y });
-                    this.dispatchEvent('die', { x: tile.x, y: tile.y });
+                    this.dispatchEvent('die', { x: r.x, y: r.y });
                 } else {
                     this.dispatchEvent('particle_reveal', { x: r.x, y: r.y });
                 }
