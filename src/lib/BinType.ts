@@ -79,22 +79,22 @@ class DecodeCtx {
 
 
 export abstract class Parser<Type> {
+    /* A signed 32-bit magic value used to detect if formats match. */
+    public abstract readonly magic: number;
+
     public abstract encode(ctx: EncodeCtx, value: Type): void;
     public abstract decode(ctx: DecodeCtx): Type;
-    // TODO: Change magic() to `public abstract readonly magic: number`;
-    /* A signed 32-bit magic value used to detect if formats match. */
-    public abstract magic(): number;
 
     public toBinary(value: Type): ArrayBuffer {
         const ctx = new EncodeCtx();
-        ctx.putBuffer(new Uint32Array([ this.magic() ]).buffer);
+        ctx.putBuffer(new Uint32Array([ this.magic ]).buffer);
         this.encode(ctx, value);
         return ctx.final();
     }
     public fromBinary(buffer: ArrayBuffer): Type {
         const ctx = new DecodeCtx(buffer);
         const magic = new Uint32Array(ctx.getBuffer(4))[0];
-        if(magic != this.magic()) {
+        if(magic != this.magic) {
             throw new Error('Parser magic value does not match.');
         }
         return this.decode(ctx);
@@ -113,6 +113,8 @@ export type ParserType<P extends Parser<any>> = P extends Parser<infer T> ? T : 
 
 
 class UsizeParser extends Parser<bigint> {
+    public readonly magic: number = hashStr('UsizeParser');
+
     public encode(ctx: EncodeCtx, value: bigint): void {
         if(value == 0n) {
             ctx.putByte(0);
@@ -140,15 +142,14 @@ class UsizeParser extends Parser<bigint> {
         } while ((byte & 0x80) != 0);
         return value;
     }
-    public magic(): number {
-        return hashStr('UsizeParser');
-    }
 }
 export function usize(): Parser<bigint> {
     return new UsizeParser();
 }
 
 class BinaryParser extends Parser<ArrayBuffer> {
+    public readonly magic: number = hashStr('BinaryParser');
+
     public encode(ctx: EncodeCtx, buf: ArrayBuffer): void {
         usize().encode(ctx, BigInt(buf.byteLength));
         ctx.putBuffer(buf);
@@ -157,9 +158,6 @@ class BinaryParser extends Parser<ArrayBuffer> {
         const length: number = Number(usize().decode(ctx));
         return ctx.getBuffer(length);
     }
-    public magic(): number {
-        return hashStr('BinaryParser');
-    }
 }
 export function binary(): Parser<ArrayBuffer> {
     return new BinaryParser();
@@ -167,11 +165,13 @@ export function binary(): Parser<ArrayBuffer> {
 
 type NumType = 'u8' | 'u16' | 'u32' | 'i8' | 'i16' | 'i32' | 'f32' | 'f64';
 class NumberParser extends Parser<number> {
+    public readonly magic: number;
     public readonly type: NumType;
 
     public constructor(type: NumType) {
         super();
         this.type = type;
+        this.magic = hashStr(`NumberParser:${this.type}`);
     }
 
     public encode(ctx: EncodeCtx, number: number): void {
@@ -205,30 +205,75 @@ class NumberParser extends Parser<number> {
         }
         return number;
     }
-    public magic(): number {
-        return hashStr('NumberParser');
-    }
 }
 export function number(type: NumType): Parser<number> {
     return new NumberParser(type);
 }
 
 class StringParser extends Parser<string> {
+    public readonly magic: number = hashStr('StringParser');
+
     public encode(ctx: EncodeCtx, str: string): void {
         binary().encode(ctx, new TextEncoder().encode(str));
     }
     public decode(ctx: DecodeCtx): string {
         return new TextDecoder('utf-8').decode(binary().decode(ctx));
     }
-    public magic(): number {
-        return hashStr('StringParser');
-    }
 }
 export function string(): Parser<string> {
     return new StringParser();
 }
 
+class BooleanParser extends Parser<boolean> {
+    public readonly magic: number = hashStr('BooleanParser');
+
+    public encode(ctx: EncodeCtx, value: boolean): void {
+        ctx.putByte(value ? 0x01 : 0x00);
+    }
+    public decode(ctx: DecodeCtx): boolean {
+        switch(ctx.getByte()) {
+            case 0x00: return false;
+            case 0x01: return true;
+            default: throw new Error('BooleanParser invalid boolean value.');
+        }
+    }
+}
+export function boolean(): Parser<boolean> {
+    return new BooleanParser();
+}
+
+class NullableParser<T extends Parser<any>> extends Parser<ParserType<T> | null> {
+    public readonly magic: number;
+    public readonly type: T;
+
+    public constructor(type: T) {
+        super();
+        this.type = type;
+        this.magic = hashStr(`NullableParser:${this.type.magic}`);
+    }
+
+    public encode(ctx: EncodeCtx, value: ParserType<T> | null): void {
+        if(value === null) {
+            ctx.putByte(0x00);
+        } else {
+            ctx.putByte(0x01);
+            this.type.encode(ctx, value);
+        }
+    }
+    public decode(ctx: DecodeCtx): ParserType<T> | null {
+        switch(ctx.getByte()) {
+            case 0x00: return null;
+            case 0x01: return this.type.decode(ctx);
+            default: throw new Error('NullableParser invalid value.');
+        }
+    }
+}
+export function nullable<T extends Parser<any>>(type: T): Parser<ParserType<T> | null> {
+    return new NullableParser(type);
+}
+
 class ObjectParser<O extends {[key: string]: Parser<any>}> extends Parser<{[key in keyof O]: ParserType<O[key]>}> {
+    public readonly magic: number;
     public readonly objType: O;
     public readonly keys: (keyof O)[];
 
@@ -236,6 +281,7 @@ class ObjectParser<O extends {[key: string]: Parser<any>}> extends Parser<{[key 
         super();
         this.objType = objType;
         this.keys = (Object.keys(this.objType) as (keyof O)[]).toSorted();
+        this.magic = hashStr(`StringParser:${this.keys.map(key => `${String(key)}-${this.objType[key].magic}`).join(',')}`);
     }
 
     public encode(ctx: EncodeCtx, obj: { [key in keyof O]: ParserType<O[key]>; }): void {
@@ -250,20 +296,19 @@ class ObjectParser<O extends {[key: string]: Parser<any>}> extends Parser<{[key 
         }
         return obj as {[key in keyof O]: ParserType<O[key]>};
     }
-    public magic(): number {
-        return hashStr(`StringParser:${this.keys.map(key => `${String(key)}-${this.objType[key].magic()}`).join(',')}`);
-    }
 }
 export function object<O extends {[key: string]: Parser<any>}>(objType: O): Parser<{[key in keyof O]: ParserType<O[key]>}> {
     return new ObjectParser(objType);
 }
 
 class ArrayParser<A extends Parser<any>> extends Parser<ParserType<A>[]> {
+    public readonly magic: number;
     public readonly arrType: A;
 
     public constructor(arrType: A) {
         super();
         this.arrType = arrType;
+        this.magic = hashStr(`ArrayParser:${this.arrType.magic}`);
     }
 
     public encode(ctx: EncodeCtx, arr: ParserType<A>[]): void {
@@ -280,15 +325,13 @@ class ArrayParser<A extends Parser<any>> extends Parser<ParserType<A>[]> {
         }
         return arr;
     }
-    public magic(): number {
-        return hashStr(`ArrayParser:${this.arrType.magic()}`);
-    }
 }
 export function array<A extends Parser<any>>(type: A): Parser<ParserType<A>[]> {
     return new ArrayParser(type);
 }
 
 class RecordParser<K extends Parser<string | number>, V extends Parser<any>> extends Parser<Record<ParserType<K>, ParserType<V>>> {
+    public readonly magic: number;
     public readonly keyType: K;
     public readonly valueType: V;
 
@@ -296,6 +339,7 @@ class RecordParser<K extends Parser<string | number>, V extends Parser<any>> ext
         super();
         this.keyType = keyType;
         this.valueType = valueType;
+        this.magic = hashStr(`RecordParser:${this.keyType.magic}-${this.valueType.magic}`);
     }
 
     public encode(ctx: EncodeCtx, record: Record<ParserType<K>, ParserType<V>>): void {
@@ -319,23 +363,19 @@ class RecordParser<K extends Parser<string | number>, V extends Parser<any>> ext
         }
         return entries;
     }
-    public magic(): number {
-        return hashStr(`RecordParser:${this.keyType.magic()}-${this.valueType.magic()}`);
-    }
 }
 export function record<K extends Parser<string | number>, V extends Parser<any>>(keyType: K, valueType: V): Parser<Record<ParserType<K>, ParserType<V>>> {
     return new RecordParser(keyType, valueType);
 }
 
 class DateParser extends Parser<Date> {
+    public readonly magic: number = hashStr('DateParser');
+
     public encode(ctx: EncodeCtx, date: Date): void {
         usize().encode(ctx, BigInt(date.valueOf()));
     }
     public decode(ctx: DecodeCtx): Date {
         return new Date(Number(usize().decode(ctx)));
-    }
-    public magic(): number {
-        return hashStr('DateParser');
     }
 }
 export function date(): Parser<Date> {
@@ -343,6 +383,7 @@ export function date(): Parser<Date> {
 }
 
 class PackedParser<P extends Parser<any>> extends Parser<ParserType<P>> {
+    public readonly magic: number;
     public readonly parser: P;
     public readonly compressed: boolean;
 
@@ -350,6 +391,7 @@ class PackedParser<P extends Parser<any>> extends Parser<ParserType<P>> {
         super();
         this.parser = parser;
         this.compressed = compressed;
+        this.magic = hashStr(`PackedParser:${this.parser.magic}:${this.compressed ? 'Compressed' : 'Uncompressed'}`);
     }
 
     public encode(ctx: EncodeCtx, value: ParserType<P>): void {
@@ -368,9 +410,6 @@ class PackedParser<P extends Parser<any>> extends Parser<ParserType<P>> {
         }
         const packedCtx = new DecodeCtx(packed);
         return this.parser.decode(packedCtx);
-    }
-    public magic(): number {
-        return hashStr(`PackedParser:${this.parser.magic()}:${this.compressed ? 'Compressed' : 'Uncompressed'}`);
     }
 }
 export function packed<P extends Parser<any>>(parser: P, compressed: boolean): Parser<ParserType<P>> {
