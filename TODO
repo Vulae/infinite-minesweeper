@@ -12,7 +12,7 @@
     * [ ] Modern theme (Flat style graphics)
     * [ ] SeaBear1015 theme (https://github.com/Vulae/infinite-minesweeper/issues/4)
 * [ ] Retro theme: Replace number placeholders
-* [ ] Skull displayed on tiles that player died on
+* [X] Skull displayed on tiles that player died on
 
 * [ ] Extreme zoom out
     * (Zoom out very far, stop rendering individual tiles and just render biome colors)
