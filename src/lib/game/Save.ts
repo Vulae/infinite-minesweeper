@@ -62,11 +62,11 @@ export const F_CHUNK = b.object({
     tiles: b.binary()
 });
 
-export const F_SAVE = b.packed(b.object({
+export const F_SAVE = b.modifyhash('v1.0.0', b.packed(b.object({
     seed: b.number('u32'),
     createdAt: b.date(),
     numDeaths: b.number('u32'),
     chunks: b.record(b.string(), F_CHUNK)
-}), true);
+}), true));
 
 

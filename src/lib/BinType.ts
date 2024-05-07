@@ -466,4 +466,27 @@ export function packed<P extends Parser<any>>(parser: P, compressed: boolean): P
     return new PackedParser(parser, compressed);
 }
 
+class ModifyHashParser<P extends Parser<any>> extends Parser<ParserType<P>> {
+    public readonly magic: number;
+    public readonly modifier: string;
+    public readonly parser: P;
+
+    constructor(modifier: string, parser: P) {
+        super();
+        this.modifier = modifier;
+        this.parser = parser;
+        this.magic = hashStr(`ModifyHashParser:${this.parser.magic}:${this.modifier}`);
+    }
+
+    public encode(ctx: EncodeCtx, value: ParserType<P>): void {
+        this.parser.encode(ctx, value);
+    }
+    public decode(ctx: DecodeCtx): ParserType<P> {
+        return this.parser.decode(ctx);
+    }
+}
+export function modifyhash<P extends Parser<any>>(modifier: string, parser: P): ModifyHashParser<P> {
+    return new ModifyHashParser(modifier, parser);
+}
+
 
