@@ -112,101 +112,151 @@ export type ParserType<P extends Parser<any>> = P extends Parser<infer T> ? T : 
 
 
 
-class UsizeParser extends Parser<bigint> {
-    public readonly magic: number = hashStr('UsizeParser');
+/**
+ * BigInt encoding is as follows:
+ * 
+ * UNSIGNED: 0bNNNNNNNX[n]
+ * SIGNED:   0bNNNNNNSX[0], 0bNNNNNNNX[n]
+ * 
+ * Where X is extension bit, if this is set there is another byte in the array.
+ * Where N is the underlying number bits that is directly set in the bigint number.
+ * Where S is the signedness of the bigint.
+ * 
+ * WARNING: This encoding of bigint allows for -0 to exist.
+ */
+class BigIntParser extends Parser<bigint> {
+    public readonly magic: number;
+    public readonly signed: boolean;
+
+    public constructor(signed: boolean) {
+        super();
+        this.signed = signed;
+        this.magic = hashStr(`BigIntParser:${this.signed ? 'Signed' : 'Unsigned'}`);
+    }
 
     public encode(ctx: EncodeCtx, value: bigint): void {
-        if(value == 0n) {
-            ctx.putByte(0);
-            return;
-        }
-        let remaining: bigint = value;
-        while (remaining != 0n) {
-            let encodedByte: number = Number(remaining & 0x7fn) | 0x80;
-            remaining >>= 7n;
-            if (remaining == 0n) {
-                encodedByte &= 0x7f;
+        const negative: boolean = (value < 0n);
+
+        if(negative) {
+            if(!this.signed) {
+                throw new Error('Cannot encode negative bigint when parser is not signed.');
             }
-            ctx.putByte(encodedByte);
+            value = -value;
+        }
+
+        // Encode first byte
+        if(!this.signed) {
+            ctx.putByte(
+                Number((value & 0b01111111n) << 1n) |
+                ((value > 0b01111111n) ? 0b00000001 : 0b00000000)
+            );
+            value >>= 7n;
+        } else {
+            ctx.putByte(
+                Number((value & 0b00111111n) << 2n) |
+                (negative ? 0b00000010 : 0b00000000) |
+                ((value > 0b00111111n) ? 0b00000001 : 0b00000000)
+            );
+            value >>= 6n;
+        }
+
+        // Encode rest bytes
+        while(value > 0n) {
+            ctx.putByte(
+                Number((value & 0b01111111n) << 1n) |
+                ((value > 0b01111111n) ? 0b00000001 : 0b00000000)
+            );
+            value >>= 7n;
         }
     }
     public decode(ctx: DecodeCtx): bigint {
-        let value: bigint = 0n;
-        let shift: bigint = 0n;
-        let byte: number;
-        do {
+        // Decode first byte
+        let byte: number = ctx.getByte();
+        let value: bigint = !this.signed ? (BigInt(byte & 0b11111110) >> 1n) : (BigInt(byte & 0b11111100) >> 2n);
+        const negative: boolean = !this.signed ? false : ((byte & 0b00000010) ? true : false);
+        let shift: number = !this.signed ? 7 : 6;
+
+        // Decode rest bytes
+        while(byte & 0b00000001) {
             byte = ctx.getByte();
-            const encodedValue: bigint = BigInt(byte & 0x7f);
-            value |= (encodedValue << shift);
-            shift += 7n;
-        } while ((byte & 0x80) != 0);
-        return value;
+            value |= BigInt((byte & 0b11111110) >> 1) << BigInt(shift);
+            shift += 7;
+        }
+
+        return !negative ? value : -value;
     }
 }
-export function usize(): Parser<bigint> {
-    return new UsizeParser();
+export function bigint(signed: boolean = true): BigIntParser {
+    return new BigIntParser(signed);
 }
 
 class BinaryParser extends Parser<ArrayBuffer> {
     public readonly magic: number = hashStr('BinaryParser');
 
     public encode(ctx: EncodeCtx, buf: ArrayBuffer): void {
-        usize().encode(ctx, BigInt(buf.byteLength));
+        bigint(false).encode(ctx, BigInt(buf.byteLength));
         ctx.putBuffer(buf);
     }
     public decode(ctx: DecodeCtx): ArrayBuffer {
-        const length: number = Number(usize().decode(ctx));
+        const length: number = Number(bigint(false).decode(ctx));
         return ctx.getBuffer(length);
     }
 }
-export function binary(): Parser<ArrayBuffer> {
+export function binary(): BinaryParser {
     return new BinaryParser();
 }
 
-type NumType = 'u8' | 'u16' | 'u32' | 'i8' | 'i16' | 'i32' | 'f32' | 'f64';
-class NumberParser extends Parser<number> {
+class NumberParser<
+    T extends 'u8' | 'u16' | 'u32' | 'u64' | 'i8' | 'i16' | 'i32' | 'i64' | 'f32' | 'f64',
+    N extends (T extends 'u64' | 'i64' ? bigint : number) = (T extends 'u64' | 'i64' ? bigint : number)
+> extends Parser<N> {
     public readonly magic: number;
-    public readonly type: NumType;
+    public readonly type: T;
 
-    public constructor(type: NumType) {
+    public constructor(type: T) {
         super();
         this.type = type;
         this.magic = hashStr(`NumberParser:${this.type}`);
     }
 
-    public encode(ctx: EncodeCtx, number: number): void {
+    // TypeScript has forced my hands! Why wont this narrow the number type!
+    public encode(ctx: EncodeCtx, number: N): void {
         ctx.update(8);
         const view = new DataView(ctx.buffer);
         switch(this.type) {
-            case 'u8': view.setUint8(ctx.pointer, number); ctx.pointer += 1; break;
-            case 'u16': view.setUint16(ctx.pointer, number, true); ctx.pointer += 2; break;
-            case 'u32': view.setUint32(ctx.pointer, number, true); ctx.pointer += 4; break;
-            case 'i8': view.setInt8(ctx.pointer, number); ctx.pointer += 1; break;
-            case 'i16': view.setInt16(ctx.pointer, number, true); ctx.pointer += 2; break;
-            case 'i32': view.setInt32(ctx.pointer, number, true); ctx.pointer += 4; break;
-            case 'f32': view.setFloat32(ctx.pointer, number); ctx.pointer += 4; break;
-            case 'f64': view.setFloat64(ctx.pointer, number, true); ctx.pointer += 8; break;
+            case 'u8': view.setUint8(ctx.pointer, number as number); ctx.pointer += 1; break;
+            case 'u16': view.setUint16(ctx.pointer, number as number, true); ctx.pointer += 2; break;
+            case 'u32': view.setUint32(ctx.pointer, number as number, true); ctx.pointer += 4; break;
+            case 'u64': view.setBigUint64(ctx.pointer, number as bigint, true); ctx.pointer += 8; break;
+            case 'i8': view.setInt8(ctx.pointer, number as number); ctx.pointer += 1; break;
+            case 'i16': view.setInt16(ctx.pointer, number as number, true); ctx.pointer += 2; break;
+            case 'i32': view.setInt32(ctx.pointer, number as number, true); ctx.pointer += 4; break;
+            case 'i64': view.setBigInt64(ctx.pointer, number as bigint, true); ctx.pointer += 8; break;
+            case 'f32': view.setFloat32(ctx.pointer, number as number, true); ctx.pointer += 4; break;
+            case 'f64': view.setFloat64(ctx.pointer, number as number, true); ctx.pointer += 8; break;
             default: throw new Error('NumParser invalid type.');
         }
     }
-    public decode(ctx: DecodeCtx): number {
+    public decode(ctx: DecodeCtx): N {
         const view = new DataView(ctx.buffer);
-        let number: number;
+        let number: N;
         switch(this.type) {
-            case 'u8': number = view.getUint8(ctx.pointer); ctx.pointer += 1; break;
-            case 'u16': number = view.getUint16(ctx.pointer, true); ctx.pointer += 2; break;
-            case 'u32': number = view.getUint32(ctx.pointer, true); ctx.pointer += 4; break;
-            case 'i8': number = view.getInt8(ctx.pointer); ctx.pointer += 1; break;
-            case 'i16': number = view.getInt16(ctx.pointer, true); ctx.pointer += 2; break;
-            case 'i32': number = view.getInt32(ctx.pointer, true); ctx.pointer += 4; break;
-            case 'f32': number = view.getFloat32(ctx.pointer); ctx.pointer += 4; break;
-            case 'f64': number = view.getFloat64(ctx.pointer, true); ctx.pointer += 8; break;
+            case 'u8': number = view.getUint8(ctx.pointer) as N; ctx.pointer += 1; break;
+            case 'u16': number = view.getUint16(ctx.pointer, true) as N; ctx.pointer += 2; break;
+            case 'u32': number = view.getUint32(ctx.pointer, true) as N; ctx.pointer += 4; break;
+            case 'u64': number = view.getBigUint64(ctx.pointer, true) as N; ctx.pointer += 8; break;
+            case 'i8': number = view.getInt8(ctx.pointer) as N; ctx.pointer += 1; break;
+            case 'i16': number = view.getInt16(ctx.pointer, true) as N; ctx.pointer += 2; break;
+            case 'i32': number = view.getInt32(ctx.pointer, true) as N; ctx.pointer += 4; break;
+            case 'i64': number = view.getBigInt64(ctx.pointer, true) as N; ctx.pointer += 8; break;
+            case 'f32': number = view.getFloat32(ctx.pointer, true) as N; ctx.pointer += 4; break;
+            case 'f64': number = view.getFloat64(ctx.pointer, true) as N; ctx.pointer += 8; break;
             default: throw new Error('NumParser invalid type.');
         }
         return number;
     }
 }
-export function number(type: NumType): Parser<number> {
+export function number<T extends 'u8' | 'u16' | 'u32' | 'u64' | 'i8' | 'i16' | 'i32' | 'i64' | 'f32' | 'f64'>(type: T): NumberParser<T> {
     return new NumberParser(type);
 }
 
@@ -220,7 +270,7 @@ class StringParser extends Parser<string> {
         return new TextDecoder('utf-8').decode(binary().decode(ctx));
     }
 }
-export function string(): Parser<string> {
+export function string(): StringParser {
     return new StringParser();
 }
 
@@ -238,7 +288,7 @@ class BooleanParser extends Parser<boolean> {
         }
     }
 }
-export function boolean(): Parser<boolean> {
+export function boolean(): BooleanParser {
     return new BooleanParser();
 }
 
@@ -268,7 +318,7 @@ class NullableParser<T extends Parser<any>> extends Parser<ParserType<T> | null>
         }
     }
 }
-export function nullable<T extends Parser<any>>(type: T): Parser<ParserType<T> | null> {
+export function nullable<T extends Parser<any>>(type: T): NullableParser<T> {
     return new NullableParser(type);
 }
 
@@ -297,7 +347,7 @@ class ObjectParser<O extends {[key: string]: Parser<any>}> extends Parser<{[key 
         return obj as {[key in keyof O]: ParserType<O[key]>};
     }
 }
-export function object<O extends {[key: string]: Parser<any>}>(objType: O): Parser<{[key in keyof O]: ParserType<O[key]>}> {
+export function object<O extends {[key: string]: Parser<any>}>(objType: O): ObjectParser<O> {
     return new ObjectParser(objType);
 }
 
@@ -312,13 +362,13 @@ class ArrayParser<A extends Parser<any>> extends Parser<ParserType<A>[]> {
     }
 
     public encode(ctx: EncodeCtx, arr: ParserType<A>[]): void {
-        usize().encode(ctx, BigInt(arr.length));
+        bigint(false).encode(ctx, BigInt(arr.length));
         for(const item of arr) {
             this.arrType.encode(ctx, item);
         }
     }
     public decode(ctx: DecodeCtx): ParserType<A>[] {
-        const length: number = Number(usize().decode(ctx));
+        const length: number = Number(bigint(false).decode(ctx));
         const arr: ParserType<A>[] = [];
         for(let i = 0; i < length; i++) {
             arr.push(this.arrType.decode(ctx));
@@ -326,7 +376,7 @@ class ArrayParser<A extends Parser<any>> extends Parser<ParserType<A>[]> {
         return arr;
     }
 }
-export function array<A extends Parser<any>>(type: A): Parser<ParserType<A>[]> {
+export function array<A extends Parser<any>>(type: A): ArrayParser<A> {
     return new ArrayParser(type);
 }
 
@@ -344,7 +394,7 @@ class RecordParser<K extends Parser<string | number>, V extends Parser<any>> ext
 
     public encode(ctx: EncodeCtx, record: Record<ParserType<K>, ParserType<V>>): void {
         const entries = Object.entries(record);
-        usize().encode(ctx, BigInt(entries.length));
+        bigint(false).encode(ctx, BigInt(entries.length));
         for(const [ key, value ] of entries) {
             this.keyType.encode(ctx, key);
             this.valueType.encode(ctx, value);
@@ -354,7 +404,7 @@ class RecordParser<K extends Parser<string | number>, V extends Parser<any>> ext
         // FIXME
         // @ts-ignore
         const entries: Record<ParserType<K>, ParserType<V>> = {};
-        const numEntries: number = Number(usize().decode(ctx));
+        const numEntries: number = Number(bigint(false).decode(ctx));
         for(let i = 0; i < numEntries; i++) {
             const key = this.keyType.decode(ctx);
             const value = this.valueType.decode(ctx);
@@ -364,7 +414,7 @@ class RecordParser<K extends Parser<string | number>, V extends Parser<any>> ext
         return entries;
     }
 }
-export function record<K extends Parser<string | number>, V extends Parser<any>>(keyType: K, valueType: V): Parser<Record<ParserType<K>, ParserType<V>>> {
+export function record<K extends Parser<string | number>, V extends Parser<any>>(keyType: K, valueType: V): RecordParser<K, V> {
     return new RecordParser(keyType, valueType);
 }
 
@@ -372,13 +422,13 @@ class DateParser extends Parser<Date> {
     public readonly magic: number = hashStr('DateParser');
 
     public encode(ctx: EncodeCtx, date: Date): void {
-        usize().encode(ctx, BigInt(date.valueOf()));
+        bigint(false).encode(ctx, BigInt(date.valueOf()));
     }
     public decode(ctx: DecodeCtx): Date {
-        return new Date(Number(usize().decode(ctx)));
+        return new Date(Number(bigint(false).decode(ctx)));
     }
 }
-export function date(): Parser<Date> {
+export function date(): DateParser {
     return new DateParser();
 }
 
@@ -412,7 +462,7 @@ class PackedParser<P extends Parser<any>> extends Parser<ParserType<P>> {
         return this.parser.decode(packedCtx);
     }
 }
-export function packed<P extends Parser<any>>(parser: P, compressed: boolean): Parser<ParserType<P>> {
+export function packed<P extends Parser<any>>(parser: P, compressed: boolean): PackedParser<P> {
     return new PackedParser(parser, compressed);
 }
 
