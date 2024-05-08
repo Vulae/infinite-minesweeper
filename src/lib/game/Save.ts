@@ -1,7 +1,7 @@
 
-import { Base64 } from "js-base64";
 import { World } from "./World";
 import * as b from "$lib/BinType";
+import { Viewport } from "./Viewport";
 
 
 
@@ -16,28 +16,47 @@ function newWorld(saveSlot: string, overwrite: boolean): World {
     return world;
 }
 
-export function load(saveSlot: string): World {
+export function load(saveSlot: string): { world: World, viewport?: Viewport } {
     const str = localStorage.getItem(saveSlot);
     if(!str) {
-        return newWorld(saveSlot, true);
+        return { world: newWorld(saveSlot, true) };
     } else {
         console.log('Loaded saved world');
         try {
-            return World.load(F_SAVE.fromBase64(str));
+            const save = F_SAVE.fromBase64(str);
+            const world = World.load(save.world);
+
+            if(save.viewport) {
+                const viewport = new Viewport(world);
+                // FIXME: Why is this extra logic needed?
+                viewport.cameraX = save.viewport.x;
+                viewport.cameraY = save.viewport.y;
+                viewport.cameraZoom = save.viewport.zoom;
+                return { world, viewport };
+            } else {
+                return { world };
+            }
         } catch(err) {
             console.error('Failed to load world.');
             console.error(err);
 
-            return newWorld(saveSlot, false);
+            return { world: newWorld(saveSlot, false) };
         }
     }
 }
 
-export function save(saveSlot: string, world: World): void {
+export function save(saveSlot: string, world: World, viewport?: Viewport): void {
     if(localStorage.getItem(saveSlot) !== null) {
         console.log('Save world');
         try {
-            localStorage.setItem(saveSlot, F_SAVE.toBase64(world.save()));
+            localStorage.setItem(saveSlot, F_SAVE.toBase64({
+                world: world.save(),
+                viewport: viewport ? {
+                    x: viewport.cameraX + viewport.cameraWidth() / 2,
+                    y: viewport.cameraY + viewport.cameraHeight() / 2,
+                    zoom: viewport.cameraZoom
+                } : null
+            }));
             localStorage.removeItem('save_error');
         } catch(err) {
             localStorage.setItem('save_error', String(err));
@@ -62,11 +81,20 @@ export const F_CHUNK = b.object({
     tiles: b.binary()
 });
 
-export const F_SAVE = b.modifyhash('v1.0.1', b.packed(b.object({
+export const F_WORLD = b.object({
     seed: b.number('u32'),
     createdAt: b.date(),
     numDeaths: b.number('u32'),
     chunks: b.record(b.string(), F_CHUNK)
+});
+
+export const F_SAVE = b.modifyhash('v1.0.2', b.packed(b.object({
+    world: F_WORLD,
+    viewport: b.nullable(b.object({
+        x: b.number('f64'),
+        y: b.number('f64'),
+        zoom: b.number('f64')
+    }))
 }), true));
 
 

@@ -6,16 +6,22 @@
     import type { Theme } from "$lib/game/theme/Theme";
     import { ThemeRetro } from "$lib/game/theme/retro";
     import { volume, world as worldStore } from "../store";
+    import { Viewport } from "$lib/game/Viewport";
 
     export let saveSlot: string;
     let world: World;
     let theme: Theme = new ThemeRetro();
+    let viewport: Viewport;
 
     $: theme.volume = $volume;
 
     onMount(async () => {
         await theme.init();
-        world = load(saveSlot);
+
+        const save = load(saveSlot);
+        world = save.world;
+        viewport = save.viewport ?? new Viewport(world);
+
         $worldStore = world;
 
         world.addEventListener('sound_unflag', () => {
@@ -41,12 +47,12 @@
 <svelte:window
     on:beforeunload={() => {
         $worldStore = null;
-        save(saveSlot, world);
+        save(saveSlot, world, viewport);
     }}
 />
 
-{#if world && theme}
-    <Renderer {world} {theme} on:action={ev => {
+{#if world && theme && viewport}
+    <Renderer {world} {theme} {viewport} on:action={ev => {
         if(ev.detail.type == 'reveal') {
             world.reveal(ev.detail.pos.x, ev.detail.pos.y);
         } else if(ev.detail.type == 'flag') {

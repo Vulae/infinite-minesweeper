@@ -6,7 +6,7 @@ import { splitmix32 } from "../RNG";
 import type { ValidTile } from "./tile/Tile";
 import { EventDispatcher } from "$lib/EventDispatcher";
 import * as b from "$lib/BinType";
-import { F_SAVE } from "./Save";
+import { F_WORLD } from "./Save";
 
 
 
@@ -206,8 +206,8 @@ export class World extends EventDispatcher<{
 
 
 
-    public save(): b.ParserType<typeof F_SAVE> {
-        const obj: b.ParserType<typeof F_SAVE> = {
+    public save(): b.ParserType<typeof F_WORLD> {
+        const obj: b.ParserType<typeof F_WORLD> = {
             seed: this.seed,
             createdAt: this.createdAt,
             numDeaths: this.deaths,
@@ -223,7 +223,7 @@ export class World extends EventDispatcher<{
         return obj;
     }
 
-    public static load(save: b.ParserType<typeof F_SAVE>): World {
+    public static load(save: b.ParserType<typeof F_WORLD>): World {
         const world = new World(save.seed);
         world.createdAt = save.createdAt;
         world.deaths = save.numDeaths;

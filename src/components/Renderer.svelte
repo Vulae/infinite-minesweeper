@@ -13,7 +13,7 @@
     export let world: World;
     export let theme: Theme;
 
-    const viewport: Viewport = new Viewport(world);
+    export let viewport: Viewport;
 
     // We separate world & particles to improve performance, not needing to render both at the same time.
     let worldRenderer: WorldRenderer;
