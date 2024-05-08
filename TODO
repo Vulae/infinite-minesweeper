@@ -41,8 +41,9 @@
     * [ ] Blueberry Chocolate (Blueberry with extra mines)
     * [X] Waffle (2x2 checkers of tiles, dark sections have 3 mines, light sections have 1 mine)
     * [X] Stroopwafel (3x3 checkers of tiles, dark sections have 8 mines, light sections have 1 mine)
-    * [ ] Strawberry (Tile may have a 2 numbers for bombs in range)
+    * [X] Strawberry (Tile may have a 2 numbers for bombs in range)
     * [ ] Strawberry Chocolate (Strawberry with extra mines)
+* [ ] Better biome generation (Don't allow for tiny biomes.)
 
 * [ ] Items
     * [ ] Reveal (Reveal 3x3 area and flag bombs)

@@ -127,8 +127,15 @@ export class World extends EventDispatcher<{
 
         let reveal: ValidTile[] = [ ];
         let stack: ValidTile[] = [ ];
+        // If either of strawberry nearby mine values is right.
+        if(tile.type == 'strawberry') {
+            const nearbySecondary = tile.minesNearbySecondary(false);
+            if(nearbySecondary != null && nearbySecondary == tile.flagsNearby()) {
+                stack.push(tile);
+            }
+        }
         if(tile.minesNearby() == tile.flagsNearby()) {
-            stack.push(tile);
+            if(!stack.includes(tile)) stack.push(tile);
         }
 
         while(stack.length > 0) {

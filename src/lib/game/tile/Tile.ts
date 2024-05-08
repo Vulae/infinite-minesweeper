@@ -4,6 +4,7 @@ import { CHUNK_SIZE } from "../Constants";
 import type { World } from "../World";
 import type { BlueberryTile } from "./Blueberry";
 import type { ChocolateTile } from "./Chocolate";
+import type { StrawberryTile } from "./Strawberry";
 import type { StroopwafelTile } from "./Stroopwafel";
 import type { VanillaTile } from "./Vanilla";
 import type { WaffleTile } from "./Waffle";
@@ -92,8 +93,8 @@ export abstract class Tile {
 
 // TODO: Probably rename above to TileBase and rename below type to just Tile.
 // TODO: Swap name around, eg: VanillaTile -> TileVanilla
-export type ValidTile = VanillaTile | ChocolateTile | WaffleTile | StroopwafelTile | BlueberryTile;
+export type ValidTile = VanillaTile | ChocolateTile | WaffleTile | StroopwafelTile | BlueberryTile | StrawberryTile;
 // FIXME: This is dumb, why not `typeof ArrayElement<ValidTile>`
-export type ValidTileConstructor = typeof VanillaTile | typeof ChocolateTile | typeof WaffleTile | typeof StroopwafelTile | typeof BlueberryTile;
+export type ValidTileConstructor = typeof VanillaTile | typeof ChocolateTile | typeof WaffleTile | typeof StroopwafelTile | typeof BlueberryTile | typeof StrawberryTile;
 
 

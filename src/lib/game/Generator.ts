@@ -3,6 +3,7 @@ import { perlin_noise2d, splitmix32, voronoi_noise2d } from "../RNG";
 import type { World } from "./World";
 import { BlueberryTile } from "./tile/Blueberry";
 import { ChocolateTile } from "./tile/Chocolate";
+import { StrawberryTile } from "./tile/Strawberry";
 import { StroopwafelTile } from "./tile/Stroopwafel";
 import type { ValidTile, ValidTileConstructor } from "./tile/Tile";
 import { VanillaTile } from "./tile/Vanilla";
@@ -56,13 +57,21 @@ const Biomes: Biome = {
             tile: StroopwafelTile
         }]
     }, {
-        type: 'biome',
-        weight: 1,
-        tile: BlueberryTile
+        type: 'collection',
+        weight: 2,
+        scale: 32,
+        smoothness: 0.5,
+        biomes: [{
+            type: 'biome',
+            weight: 1,
+            tile: BlueberryTile
+        }, {
+            type: 'biome',
+            weight: 1,
+            tile: StrawberryTile
+        }]
     }]
 };
-
-
 
 function smoothNoisyVoronoi(seed: number, x: number, y: number, dist: number, weights: number[]): number {
     const random = splitmix32(seed, false);
@@ -90,7 +99,6 @@ export function getTileType(world: World, x: number, y: number): ValidTileConstr
 
 export function generateTile(world: World, x: number, y: number): ValidTile {
     const tileConstructor = getTileType(world, x, y);
-    // @ts-ignore - TODO: How do I deal with this?
     return new tileConstructor(world, x, y);
 }
 

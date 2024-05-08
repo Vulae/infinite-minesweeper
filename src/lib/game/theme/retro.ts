@@ -3,6 +3,7 @@ import { TextureAtlas } from "../../Atlas";
 import type { ValidParticle } from "../particle/Particle";
 import type { MultiMineTile } from "../tile/MultiMine";
 import { SingleMineTileState, type SingleMineTile } from "../tile/SingleMine";
+import type { StrawberryTile } from "../tile/Strawberry";
 import type { ValidTile } from "../tile/Tile";
 import { Theme, type SoundEffect } from "./Theme";
 
@@ -64,7 +65,9 @@ export class ThemeRetro extends Theme {
         tile_stroopwafel_dark_covered: [ 96, 48, 16, 16 ],
         tile_stroopwafel_dark_revealed: [ 112, 48, 16, 16 ],
         tile_blueberry_covered: [ 64, 64, 16, 16 ],
-        tile_blueberry_revealed: [ 80, 64, 16, 16 ]
+        tile_blueberry_revealed: [ 80, 64, 16, 16 ],
+        tile_strawberry_covered: [ 64, 80, 16, 16 ],
+        tile_strawberry_revealed: [ 80, 80, 16, 16 ],
     });
 
     public async init(): Promise<void> {
@@ -145,6 +148,33 @@ export class ThemeRetro extends Theme {
         }
     }
 
+    private drawStrawberryTile(ctx: CanvasRenderingContext2D, tile: StrawberryTile, forceCovered: boolean): void {
+        if(forceCovered) {
+            this.tileset.draw(ctx, 'tile_strawberry_covered', 0, 0, 1, 1);
+            return;
+        }
+        switch(tile.state) {
+            case SingleMineTileState.Covered: this.tileset.draw(ctx, 'tile_strawberry_covered', 0, 0, 1, 1); break;
+            case SingleMineTileState.Flagged: this.tileset.draw(ctx, 'tile_strawberry_covered', 0, 0, 1, 1); this.tileset.draw(ctx, 'flag', 0, 0, 1, 1); break;
+            case SingleMineTileState.Revealed: {
+                this.tileset.draw(ctx, 'tile_strawberry_revealed', 0, 0, 1, 1);
+
+                const nearbySecondary = tile.minesNearbySecondary(true);
+                if(nearbySecondary !== null) {
+                    ctx.save();
+                    ctx.scale(0.55, 0.55);
+                    ctx.translate(0.1, 0.45);
+                    this.drawNearby(ctx, tile.secondaryNearbyCountRightSide ? tile.minesNearby(true) : nearbySecondary);
+                    ctx.translate(0.7, 0);
+                    this.drawNearby(ctx, tile.secondaryNearbyCountRightSide ? nearbySecondary : tile.minesNearby(true));
+                    ctx.restore();
+                } else {
+                    this.drawNearby(ctx, tile.minesNearby());
+                }
+                break; }
+        }
+    }
+
     private drawForcedTile(ctx: CanvasRenderingContext2D, tile: ValidTile, forceCovered: boolean): void {
         switch(tile.type) {
             case 'vanilla': this.drawSingleMineTile(ctx, tile, 'tile_vanilla_covered', 'tile_vanilla_revealed', forceCovered); break;
@@ -165,6 +195,9 @@ export class ThemeRetro extends Theme {
                 break; }
             case 'blueberry': {
                 this.drawMultiMineTile(ctx, tile, 'tile_blueberry_covered', 'tile_blueberry_revealed', forceCovered);
+                break; }
+            case 'strawberry': {
+                this.drawStrawberryTile(ctx, tile, forceCovered);
                 break; }
         }
     }

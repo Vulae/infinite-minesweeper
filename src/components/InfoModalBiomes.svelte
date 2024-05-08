@@ -3,7 +3,7 @@
     import LucideChevronLeft from "lucide-svelte/icons/chevron-left";
     import LucideChevronRight from "lucide-svelte/icons/chevron-right";
 
-    const biomeNames = [ 'Vanilla', 'Chocolate', 'Waffle', 'Stroopwafel', 'Blueberry' ] as const;
+    const biomeNames = [ 'Vanilla', 'Chocolate', 'Waffle', 'Stroopwafel', 'Blueberry', 'Strawberry' ] as const;
     let currentBiome: ArrayElement<typeof biomeNames> = 'Vanilla';
 
     function newBiome(dir: 'next' | 'prev'): void {
@@ -127,6 +127,18 @@
                     <h2 class="biome-title">Blueberry</h2>
                     <div class="biome-description">
                         Tiles may have up to 3 mines.
+                    </div>
+                </div>
+            </div>
+        {:else if currentBiome == 'Strawberry'}
+            <div class="biome">
+                <img class="biome-backdrop" src="/infinite-minesweeper/biome_strawberry_screenshot.png" alt="Strawberry Biome Screenshot">
+                <div class="biome-content">
+                    <h2 class="biome-title">Strawberry</h2>
+                    <div class="biome-description">
+                        Tile nearby mine count may have 2 values.
+                        <br /><br />
+                        Be careful while revealing tiles; If any of the two values match, the tiles will auto reveal.
                     </div>
                 </div>
             </div>
