@@ -34,6 +34,12 @@
     * [ ] Completion date
     * [ ] Number of losses
 
+* [ ] Biome information
+    * (Display the same info in the biome info modal)
+
+* [X] Bookmarks
+    * (Save positions in the world to teleport back to at any time)
+
 * [X] Biomes
     * [X] Vanilla (Normal minesweeper)
     * [X] Chocolate (Vanilla with extra mines)

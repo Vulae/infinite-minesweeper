@@ -1,4 +1,5 @@
 
+import { EventDispatcher } from "$lib/EventDispatcher";
 import type { GeneratedChunk } from "./Chunk";
 import { CHUNK_SIZE } from "./Constants";
 import type { World } from "./World";
@@ -6,12 +7,15 @@ import type { ValidTile } from "./tile/Tile";
 
 
 
-export class Viewport {
+export class Viewport extends EventDispatcher<{
+    'change': null;
+}> {
     public readonly world: World;
     private width: number = 0;
     private height: number = 0;
 
     constructor(world: World) {
+        super();
         this.world = world;
     }
 
@@ -36,6 +40,7 @@ export class Viewport {
     public cameraTranslate(x: number, y: number): void {
         this.cameraX -= x / this.cameraZoom;
         this.cameraY -= y / this.cameraZoom;
+        this.change();
     }
 
     public forceCameraZoom(): number {
@@ -55,6 +60,8 @@ export class Viewport {
     }
 
     public cameraScale(scale: number): number {
+        const oldZoom = this.cameraZoom;
+
         const lastCenterX = this.cameraX + this.cameraWidth() * 0.5;
         const lastCenterY = this.cameraY + this.cameraHeight() * 0.5;
 
@@ -67,6 +74,10 @@ export class Viewport {
 
         this.cameraX -= centerX - lastCenterX;
         this.cameraY -= centerY - lastCenterY;
+
+        if(this.cameraZoom != oldZoom) {
+            this.change();
+        }
 
         return this.cameraZoom;
     }
@@ -123,6 +134,10 @@ export class Viewport {
                 callbackfn(chunk);
             }
         }
+    }
+
+    public change(): void {
+        this.dispatchEvent('change', null);
     }
 
 }

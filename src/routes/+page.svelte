@@ -1,50 +1,37 @@
 <script lang="ts">
     import Game from "$components/Game.svelte";
     import { resize } from "$lib/actions/Resize";
-    import { onMount } from "svelte";
     import LucideInfo from "lucide-svelte/icons/info";
     import Modal from "$components/Modal.svelte";
     import InfoModal from "$components/InfoModal.svelte";
-    import { world } from "../store";
-    import LucideSkull from "lucide-svelte/icons/skull";
+    import type { World } from "$lib/game/World";
+    import DeathCounter from "$components/DeathCounter.svelte";
+    import BookmarksModal, { type Bookmark } from "$components/BookmarksModal.svelte";
+    import type { Viewport } from "$lib/game/Viewport";
+    import LucideBookmark from "lucide-svelte/icons/bookmark";
 
-    let saveSlot: string | null = null;
-
-    onMount(() => {
-        const url = new URL(location.href);
-        saveSlot = url.searchParams.get('saveSlot') ?? 'save';
-    });
+    let saveSlot: string = 'save';
 
     let layout: 'vertical' | 'horizontal' = 'vertical';
     let layoutSide: 'start' | 'end' = 'end';
 
     let infoModalVisible: boolean = true;
+    let bookmarksModalVisible: boolean = false;
 
-
-
-    let deaths: number | null;
-
-    $: if($world !== null) {
-        deaths = $world.deaths;
-        $world.addEventListener('die', () => {
-            deaths = $world.deaths;
-        });
-    } else {
-        deaths = null;
-    }
+    let world: World;
+    let viewport: Viewport;
+    let bookmarks: Bookmark[] = [];
 
 </script>
 
 <div class="w-screen h-screen grid grid-cols-1 grid-rows-1">
     <div class="w-full h-full col-start-1 col-end-1 row-start-1 row-end-1">
-        {#if saveSlot}
-            <Game {saveSlot} />
-        {/if}
+        <Game {saveSlot} bind:world bind:viewport bind:bookmarks />
     </div>
     <!-- TODO: transition-opacity, the backdrop blur breaks when opacity is less than 1, So the blur needs to be done another way. -->
     <div
         class="w-full h-full col-start-1 col-end-1 row-start-1 row-end-1 pointer-events-none"
-        style:opacity={infoModalVisible ? 0 : 1}
+        style:opacity={(infoModalVisible || bookmarksModalVisible) ? 0 : 1}
         use:resize={(width, height) => {
             layout = (width > height) ? 'vertical' : 'horizontal';
             layoutSide = (width > height) ? 'end' : 'start';
@@ -69,25 +56,24 @@
                 >
                     <LucideInfo />
                 </button>
-                {#if deaths !== null}
-                    <div class="w-full h-full bg-white rounded-full p-[1px]" />
-                    <div
-                        class="flex items-center"
-                        style:flex-direction={layout == 'horizontal' ? 'row' : 'column'}
-                        title="{deaths} deaths"
-                    >
-                        <LucideSkull />
-                        <span class="text-sm">
-                            {deaths}
-                        </span>
-                    </div>
-                {/if}
+                <button
+                    class="rounded-full drop-shadow-sm"
+                    on:click={() => bookmarksModalVisible = true}
+                    title="Bookmarks"
+                >
+                    <LucideBookmark />
+                </button>
+                <div class="w-full h-full bg-white rounded-full p-[1px]" />
+                <DeathCounter {layout} {world} />
             </div>
         </div>
     </div>
 </div>
 
-
 <Modal bind:visible={infoModalVisible}>
     <InfoModal />
+</Modal>
+
+<Modal bind:visible={bookmarksModalVisible}>
+    <BookmarksModal bind:visible={bookmarksModalVisible} {viewport} bind:bookmarks />
 </Modal>

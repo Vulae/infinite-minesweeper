@@ -5,13 +5,16 @@
     import Renderer from "./Renderer.svelte";
     import type { Theme } from "$lib/game/theme/Theme";
     import { ThemeRetro } from "$lib/game/theme/retro";
-    import { volume, world as worldStore } from "../store";
+    import { volume } from "../store";
     import { Viewport } from "$lib/game/Viewport";
+    import type { Bookmark } from "./BookmarksModal.svelte";
 
     export let saveSlot: string;
-    let world: World;
+    export let world: World;
     let theme: Theme = new ThemeRetro();
-    let viewport: Viewport;
+    export let viewport: Viewport;
+
+    export let bookmarks: Bookmark[] = [];
 
     $: theme.volume = $volume;
 
@@ -21,8 +24,7 @@
         const save = load(saveSlot);
         world = save.world;
         viewport = save.viewport ?? new Viewport(world);
-
-        $worldStore = world;
+        bookmarks = save.bookmarks ?? [];
 
         world.addEventListener('sound_unflag', () => {
             theme.playSound('unflag');
@@ -36,6 +38,8 @@
     });
 
     onDestroy(() => {
+        world.destroyDispatcher();
+        viewport.destroyDispatcher();
         // FIXME: Fix onDestroy renderer error.
         // world.destroyDispatcher();
         // save(saveSlot, world);
@@ -46,8 +50,7 @@
 
 <svelte:window
     on:beforeunload={() => {
-        $worldStore = null;
-        save(saveSlot, world, viewport);
+        save(saveSlot, { world, viewport, bookmarks });
     }}
 />
 

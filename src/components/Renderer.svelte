@@ -46,32 +46,22 @@
         // TODO: Clean Up!
         clearInterval(keysInterval);
         keysInterval = setInterval(() => {
-            let change: boolean = false;
-
             if(keys.has('[')) {
-                if(viewport.cameraZoom != viewport.cameraScale(1.04)) {
-                    change = true;
-                }
+                viewport.cameraScale(1.04);
             }
             if(keys.has(']')) {
-                if(viewport.cameraZoom != viewport.cameraScale(0.96)) {
-                    change = true;
-                }
+                viewport.cameraScale(0.96);
             }
-            if(keys.has('ArrowUp')) { viewport.cameraTranslate(0, 10); change = true; }
-            if(keys.has('ArrowDown')) { viewport.cameraTranslate(0, -10); change = true; }
-            if(keys.has('ArrowLeft')) { viewport.cameraTranslate(10, 0); change = true; }
-            if(keys.has('ArrowRight')) { viewport.cameraTranslate(-10, 0); change = true; }
+            if(keys.has('ArrowUp')) { viewport.cameraTranslate(0, 10); }
+            if(keys.has('ArrowDown')) { viewport.cameraTranslate(0, -10); }
+            if(keys.has('ArrowLeft')) { viewport.cameraTranslate(10, 0); }
+            if(keys.has('ArrowRight')) { viewport.cameraTranslate(-10, 0); }
 
             if(keys.has('s')) {
                 // DEBUG: Zoom to nearest power of 2, for a crisp screenshot.
                 viewport.cameraZoom = Math.pow(2, Math.ceil(Math.log(viewport.cameraZoom) / Math.log(2)));
                 viewport.cameraScale(1);
-                change = true;
-            }
-
-            if(change) {
-                worldNeedsRerender = true;
+                viewport.change();
             }
         }, 1000 / 60);
 
@@ -84,6 +74,10 @@
             worldNeedsRerender = true;
             render();
         }, 100);
+
+        viewport.addEventListener('change', () => {
+            worldNeedsRerender = true;
+        });
     });
 
     onDestroy(() => {
@@ -152,12 +146,10 @@
     on:mousemove={ev => {
         if(document.pointerLockElement != container) return;
         viewport.cameraTranslate(ev.movementX, ev.movementY);
-        worldNeedsRerender = true;
     }}
     on:wheel|passive={ev => {
         const scale = ev.deltaY > 0 ? 0.9 : 1.1;
         if(viewport.cameraZoom != viewport.cameraScale(scale)) {
-            worldNeedsRerender = true;
         }
     }}
     on:contextmenu={ev => {

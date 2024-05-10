@@ -2,6 +2,7 @@
 import { World } from "./World";
 import * as b from "$lib/BinType";
 import { Viewport } from "./Viewport";
+import type { Bookmark } from "$components/BookmarksModal.svelte";
 
 
 
@@ -16,10 +17,22 @@ function newWorld(saveSlot: string, overwrite: boolean): World {
     return world;
 }
 
-export function load(saveSlot: string): { world: World, viewport?: Viewport } {
+function newSave(saveSlot: string, overwrite: boolean): Save {
+    return { world: newWorld(saveSlot, true), bookmarks: [{
+        name: 'Spawn',
+        createdAt: new Date(),
+        viewport: {
+            x: 0,
+            y: 0,
+            zoom: 32
+        }
+    }] };
+}
+
+export function load(saveSlot: string): Save {
     const str = localStorage.getItem(saveSlot);
     if(!str) {
-        return { world: newWorld(saveSlot, true) };
+        return newSave(saveSlot, true);
     } else {
         console.log('Loaded saved world');
         try {
@@ -32,30 +45,31 @@ export function load(saveSlot: string): { world: World, viewport?: Viewport } {
                 viewport.cameraX = save.viewport.x;
                 viewport.cameraY = save.viewport.y;
                 viewport.cameraZoom = save.viewport.zoom;
-                return { world, viewport };
+                return { world, viewport, bookmarks: save.bookmarks };
             } else {
-                return { world };
+                return { world, bookmarks: save.bookmarks };
             }
         } catch(err) {
             console.error('Failed to load world.');
             console.error(err);
 
-            return { world: newWorld(saveSlot, false) };
+            return newSave(saveSlot, false);
         }
     }
 }
 
-export function save(saveSlot: string, world: World, viewport?: Viewport): void {
+export function save(saveSlot: string, save: Save): void {
     if(localStorage.getItem(saveSlot) !== null) {
         console.log('Save world');
         try {
             localStorage.setItem(saveSlot, F_SAVE.toBase64({
-                world: world.save(),
-                viewport: viewport ? {
-                    x: viewport.cameraX + viewport.cameraWidth() / 2,
-                    y: viewport.cameraY + viewport.cameraHeight() / 2,
-                    zoom: viewport.cameraZoom
-                } : null
+                world: save.world.save(),
+                viewport: save.viewport ? {
+                    x: save.viewport.cameraX + save.viewport.cameraWidth() / 2,
+                    y: save.viewport.cameraY + save.viewport.cameraHeight() / 2,
+                    zoom: save.viewport.cameraZoom
+                } : null,
+                bookmarks: save.bookmarks ?? []
             }));
             localStorage.removeItem('save_error');
         } catch(err) {
@@ -88,13 +102,30 @@ export const F_WORLD = b.object({
     chunks: b.record(b.string(), F_CHUNK)
 });
 
-export const F_SAVE = b.modifyhash('v1.0.2', b.packed(b.object({
+export const F_SAVE = b.modifyhash('v1.0.3', b.packed(b.object({
     world: F_WORLD,
     viewport: b.nullable(b.object({
         x: b.number('f64'),
         y: b.number('f64'),
         zoom: b.number('f64')
+    })),
+    bookmarks: b.array(b.object({
+        name: b.string(),
+        createdAt: b.date(),
+        viewport: b.object({
+            x: b.number('f64'),
+            y: b.number('f64'),
+            zoom: b.number('f64')
+        })
     }))
 }), true));
+
+
+
+export interface Save {
+    world: World;
+    viewport?: Viewport;
+    bookmarks?: Bookmark[];
+}
 
 
