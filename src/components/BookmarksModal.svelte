@@ -60,9 +60,9 @@
                 <button
                     class="flex flex-col ml-4 hover:text-blue-800 transition-colors"
                     on:click={() => {
-                        viewport.cameraX = bookmark.viewport.x;
-                        viewport.cameraY = bookmark.viewport.y;
                         viewport.cameraZoom = bookmark.viewport.zoom;
+                        viewport.cameraX = bookmark.viewport.x - viewport.cameraWidth() / 2;
+                        viewport.cameraY = bookmark.viewport.y - viewport.cameraHeight() / 2;
                         viewport.change();
                         visible = false;
                     }}

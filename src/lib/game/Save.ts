@@ -41,7 +41,6 @@ export function load(saveSlot: string): Save {
 
             if(save.viewport) {
                 const viewport = new Viewport(world);
-                // FIXME: Why is this extra logic needed?
                 viewport.cameraX = save.viewport.x;
                 viewport.cameraY = save.viewport.y;
                 viewport.cameraZoom = save.viewport.zoom;
