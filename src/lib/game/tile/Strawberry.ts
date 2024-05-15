@@ -1,6 +1,6 @@
 
 import type { BitIO } from "$lib/BitIO";
-import { sfc_hash } from "$lib/RNG";
+import { hashNormal } from "$lib/RNG";
 import type { World } from "../World";
 import { SingleMineTile } from "./SingleMine";
 import type { ValidTile } from "./Tile";
@@ -13,11 +13,11 @@ export class StrawberryTile extends SingleMineTile {
     public readonly secondaryNearbyCountRightSide: boolean = false;
 
     public constructor(world: World, x: number, y: number) {
-        const isMine = sfc_hash(world.tileSeed, x, y, 0) > 0.825;
+        const isMine = hashNormal(world.tileSeed, x, y, 0) > 0.825;
         super(world, x, y, isMine);
-        if(sfc_hash(world.tileSeed, x, y, 1) > 0.3) {
-            this.secondaryNearbyCountModifier = sfc_hash(world.tileSeed, x, y, 2) > 0.3 ? 1 : -1;
-            this.secondaryNearbyCountRightSide = sfc_hash(world.tileSeed, x, y, 3) > 0.5;
+        if(hashNormal(world.tileSeed, x, y, 1) > 0.3) {
+            this.secondaryNearbyCountModifier = hashNormal(world.tileSeed, x, y, 2) > 0.3 ? 1 : -1;
+            this.secondaryNearbyCountRightSide = hashNormal(world.tileSeed, x, y, 3) > 0.5;
         }
     }
 

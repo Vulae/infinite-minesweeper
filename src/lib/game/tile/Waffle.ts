@@ -2,7 +2,7 @@
 import type { BitIO } from "$lib/BitIO";
 import type { World } from "../World";
 import { SingleMineTile } from "./SingleMine";
-import { sfc_hash } from "$lib/RNG";
+import { hashNormal } from "$lib/RNG";
 import type { ValidTile } from "./Tile";
 
 
@@ -19,7 +19,7 @@ export function waffle(world: World, checkerSize: number, x: number, y: number):
     const isDark = (checkerX + checkerY % 2) % 2 == 0;
 
     const checkerIndex = Math.abs(x % checkerSize) + Math.abs(y % checkerSize) * checkerSize;
-    const checkerRngPos = Math.floor(sfc_hash(world.tileSeed, checkerX, checkerY, 0) * checkerSize**2);
+    const checkerRngPos = Math.floor(hashNormal(world.tileSeed, checkerX, checkerY, 0) * checkerSize**2);
     
     const isMine = (isDark ? (
         checkerIndex == checkerRngPos ? false : true

@@ -101,7 +101,7 @@ export const F_WORLD = b.object({
     chunks: b.record(b.string(), F_CHUNK)
 });
 
-export const F_SAVE = b.modifyhash('v1.0.3', b.packed(b.object({
+export const F_SAVE = b.modifyhash('v1.0.4', b.packed(b.object({
     world: F_WORLD,
     viewport: b.nullable(b.object({
         x: b.number('f64'),

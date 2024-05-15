@@ -18,31 +18,23 @@ export function splitmix32(a: number, normalRange: boolean): () => number {
     }
 }
 
-// https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
-// I have no clue how this works, but it seems to be what I need?
 /**
  * @returns Hash value between 0 and 1
  */
-export function sfc_hash(seed: number, x: number, y: number, z: number): number {
-    const a = 0x80AA1723;
-    const b = 0xC6B272FD;
-  
-    seed ^= (seed << 13) | (seed >>> 17);
-    seed = (seed * a + b) & 0xFFFFFFFF;
-    seed ^= x;
-  
-    seed ^= (seed << 13) | (seed >>> 17);
-    seed = (seed * a + b) & 0xFFFFFFFF;
-    seed ^= y;
+export function hashNormal(seed: number, x: number, y: number, z: number): number {
+    // TODO: What are the optimal values for here?
+    x =    (x    * 2654435761) & 0x7FFFFFFF;
+    y =    (y    * 2246822519) & 0x7FFFFFFF;
+    z =    (z    * 3266489917) & 0x7FFFFFFF;
+    seed = (seed * 668265263 ) & 0x7FFFFFFF;
 
-    seed ^= (seed << 13) | (seed >>> 17);
-    seed = (seed * a + b) & 0xFFFFFFFF;
-    seed ^= z;
-  
-    seed ^= (seed << 16) | (seed >>> 15);
-    seed = (seed * a + b) & 0xFFFFFFFF;
-  
-    return (seed >>> 0) / 0xFFFFFFFF;
+    let hashValue = x ^ y ^ z ^ seed;
+    hashValue = hashValue * 374761393 + 0x9E3779B9;
+    hashValue ^= hashValue << 13;
+    hashValue ^= hashValue >> 17;
+    hashValue ^= hashValue << 5;
+
+    return (hashValue >>> 0) / 0x100000000;
 }
 
 function weightIndex(weights: number[], value: number): number {
@@ -65,14 +57,14 @@ export function voronoi_noise2d(seed: number, x: number, y: number, weights: num
 
     for (let i = Math.floor(x) - 1; i < Math.ceil(x) + 1; i++) {
         for (let j = Math.floor(y) - 1; j < Math.ceil(y) + 1; j++) {
-            const pointX = i + sfc_hash(seed, i, j, 0) - 0.5;
-            const pointY = j + sfc_hash(seed, i, j, 1) - 0.5;
+            const pointX = i + hashNormal(seed, i, j, 0) - 0.5;
+            const pointY = j + hashNormal(seed, i, j, 1) - 0.5;
 
             const dist = (pointX - x)**2 + (pointY - y)**2;
 
             if(dist < closestDist) {
                 closestDist = dist;
-                closestType = weightIndex(weights, sfc_hash(seed, i, j, 2));
+                closestType = weightIndex(weights, hashNormal(seed, i, j, 2));
             }
         }
     }
@@ -95,7 +87,7 @@ export function perlin_noise2d(seed: number, x: number, y: number): number {
     }
 
     const randomGradient = (x: number, y: number): { x: number, y: number } => {
-        const angle = sfc_hash(seed, x, y, 0);
+        const angle = hashNormal(seed, x, y, 0);
         return { x: Math.cos(angle), y: Math.sin(angle) };
     }
 

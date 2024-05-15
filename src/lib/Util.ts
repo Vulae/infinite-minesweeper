@@ -15,6 +15,16 @@ export function distance(x1: number, y1: number, x2: number, y2: number): number
     return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 }
 
+export function mapRange(value: number, valueMin: number, valueMax: number, outMin: number, outMax: number): number {
+    if(value < valueMin || value > valueMax) {
+        console.warn(`Mapped value outside of mapping range. mapRange(${value}, ${valueMin}, ${valueMax}, ${outMin}, ${outMax})`);
+    }
+    return outMin + ((value - valueMin) / (valueMax - valueMin)) * (outMax - outMin);
+}
+export function mapRangeInt(value: number, valueMin: number, valueMax: number, outMin: number, outMax: number): number {
+    return Math.floor(mapRange(value, valueMin, valueMax, outMin, outMax + 1));
+}
+
 
 
 export function createCanvasCtx(width: number, height: number): [ HTMLCanvasElement, CanvasRenderingContext2D ];
