@@ -11,6 +11,10 @@ export function clampNormal(x: number): number {
     return (x < 0) ? 0 : ((x > 1) ? 1 : x);
 }
 
+export function distance(x1: number, y1: number, x2: number, y2: number): number {
+    return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+}
+
 
 
 export function createCanvasCtx(width: number, height: number): [ HTMLCanvasElement, CanvasRenderingContext2D ];

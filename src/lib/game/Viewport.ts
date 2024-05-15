@@ -11,8 +11,8 @@ export class Viewport extends EventDispatcher<{
     'change': null;
 }> {
     public readonly world: World;
-    private width: number = 0;
-    private height: number = 0;
+    public width: number = 0;
+    public height: number = 0;
 
     constructor(world: World) {
         super();
@@ -59,18 +59,18 @@ export class Viewport extends EventDispatcher<{
         return this.cameraZoom;
     }
 
-    public cameraScale(scale: number): number {
+    public cameraScale(scale: number, aroundX: number = 0.5, aroundY: number = 0.5): number {
         const oldZoom = this.cameraZoom;
 
-        const lastCenterX = this.cameraX + this.cameraWidth() * 0.5;
-        const lastCenterY = this.cameraY + this.cameraHeight() * 0.5;
+        const lastCenterX = this.cameraX + this.cameraWidth() * aroundX;
+        const lastCenterY = this.cameraY + this.cameraHeight() * aroundY;
 
         this.cameraZoom *= scale;
 
         this.forceCameraZoom();
 
-        const centerX = this.cameraX + this.cameraWidth() * 0.5;
-        const centerY = this.cameraY + this.cameraHeight() * 0.5;
+        const centerX = this.cameraX + this.cameraWidth() * aroundX;
+        const centerY = this.cameraY + this.cameraHeight() * aroundY;
 
         this.cameraX -= centerX - lastCenterX;
         this.cameraY -= centerY - lastCenterY;

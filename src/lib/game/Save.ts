@@ -64,8 +64,8 @@ export function save(saveSlot: string, save: Save): void {
             localStorage.setItem(saveSlot, F_SAVE.toBase64({
                 world: save.world.save(),
                 viewport: save.viewport ? {
-                    x: save.viewport.cameraX + save.viewport.cameraWidth() / 2,
-                    y: save.viewport.cameraY + save.viewport.cameraHeight() / 2,
+                    x: save.viewport.cameraX,
+                    y: save.viewport.cameraY,
                     zoom: save.viewport.cameraZoom
                 } : null,
                 bookmarks: save.bookmarks ?? []
