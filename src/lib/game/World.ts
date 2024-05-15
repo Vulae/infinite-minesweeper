@@ -35,6 +35,7 @@ function* spiralIter(offsetX: number, offsetY: number): Generator<{ x: number, y
 type ChunkCoordinate = `${number},${number}`;
 
 export class World extends EventDispatcher<{
+    'change': null;
     'sound_reveal': number;
     'sound_unflag': null;
     'sound_explosion': null;
@@ -43,6 +44,10 @@ export class World extends EventDispatcher<{
     'particle_reveal': { x: number, y: number };
     'die': { x: number, y: number };
 }> {
+    public change(): void {
+        this.dispatchEvent('change', null);
+    }
+
     public readonly seed: number;
     public readonly tileSeed: number;
     public readonly biomeSeed: number;

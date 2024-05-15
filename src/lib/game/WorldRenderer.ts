@@ -31,15 +31,15 @@ export class WorldRenderer {
 
     private renderWorld(): void {
         this.ctx.imageSmoothingEnabled = false;
-        this.viewport.transformCtx(this.ctx);
+        this.viewport.transformCtx(this.canvas, this.ctx);
 
         // Render tiles
-        this.viewport.forEachTileInViewport(tile => {
+        this.viewport.forEachTileInViewport(this.canvas, tile => {
             this.theme.drawTile(this.ctx, tile);
         }, 0);
 
         // Render death icons
-        this.viewport.forEachChunkInViewport(chunk => {
+        this.viewport.forEachChunkInViewport(this.canvas, chunk => {
             chunk.deaths.forEach(death => {
                 this.theme.drawDeathIcon(this.ctx, chunk.chunkX * CHUNK_SIZE + death.x, chunk.chunkY * CHUNK_SIZE + death.y);
             });

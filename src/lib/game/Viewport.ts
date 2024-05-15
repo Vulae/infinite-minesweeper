@@ -10,109 +10,111 @@ import type { ValidTile } from "./tile/Tile";
 export class Viewport extends EventDispatcher<{
     'change': null;
 }> {
-    public readonly world: World;
-    public width: number = 0;
-    public height: number = 0;
+    public change(): void {
+        this.dispatchEvent('change', null);
+    }
 
-    constructor(world: World) {
+    public readonly world: World;
+
+    constructor(world: World, viewport?: { x: number, y: number, scale: number }) {
         super();
         this.world = world;
+        if(viewport) {
+            this.load(viewport);
+        }
     }
 
-    public setSize(width: number, height: number): void {
-        this.width = width;
-        this.height = height;
+
+    
+    /** Viewport center X */
+    public x: number = 0;
+    /** Viewport center Y */
+    public y: number = 0;
+    /** Viewport tile scale in pixels */
+    public scale: number = 64;
+
+
+
+    public load(viewport: { x: number, y: number, scale: number }): void {
+        this.x = viewport.x;
+        this.y = viewport.y;
+        this.scale = viewport.scale;
     }
 
-    // Camera position in tiles
-    public cameraX: number = 0;
-    public cameraY: number = 0;
-    // Camera tile size pixels
-    public cameraZoom: number = 32;
-    // Camera min & max zoom
-    public cameraMinZoom: number = 4;
-    public cameraMaxZoom: number = 64;
-
-    // Camera size in tiles
-    public cameraWidth(): number { return this.width / this.cameraZoom; }
-    public cameraHeight(): number { return this.height / this.cameraZoom; }
-
-    public cameraTranslate(x: number, y: number): void {
-        this.cameraX -= x / this.cameraZoom;
-        this.cameraY -= y / this.cameraZoom;
-        this.change();
-    }
-
-    public forceCameraZoom(): number {
-        if(this.width / this.cameraZoom < this.cameraMinZoom) {
-            this.cameraZoom = this.width / this.cameraMinZoom;
-        }
-        if(this.height / this.cameraZoom < this.cameraMinZoom) {
-            this.cameraZoom = this.height / this.cameraMinZoom;
-        }
-        if(this.width / this.cameraZoom > this.cameraMaxZoom) {
-            this.cameraZoom = this.width / this.cameraMaxZoom;
-        }
-        if(this.height / this.cameraZoom > this.cameraMaxZoom) {
-            this.cameraZoom = this.height / this.cameraMaxZoom;
-        }
-        return this.cameraZoom;
-    }
-
-    public cameraScale(scale: number, aroundX: number = 0.5, aroundY: number = 0.5): number {
-        const oldZoom = this.cameraZoom;
-
-        const lastCenterX = this.cameraX + this.cameraWidth() * aroundX;
-        const lastCenterY = this.cameraY + this.cameraHeight() * aroundY;
-
-        this.cameraZoom *= scale;
-
-        this.forceCameraZoom();
-
-        const centerX = this.cameraX + this.cameraWidth() * aroundX;
-        const centerY = this.cameraY + this.cameraHeight() * aroundY;
-
-        this.cameraX -= centerX - lastCenterX;
-        this.cameraY -= centerY - lastCenterY;
-
-        if(this.cameraZoom != oldZoom) {
-            this.change();
-        }
-
-        return this.cameraZoom;
-    }
-
-    public cameraBounds(margin: number = 0): { minX: number, minY: number, maxX: number, maxY: number } {
+    public save(): { x: number, y: number, scale: number } {
         return {
-            minX: Math.floor(this.cameraX - margin),
-            minY: Math.floor(this.cameraY - margin),
-            maxX: Math.ceil(this.cameraX + this.cameraWidth() + margin),
-            maxY: Math.ceil(this.cameraY + this.cameraHeight() + margin)
+            x: this.x,
+            y: this.y,
+            scale: this.scale
         }
     }
 
-    public isInCameraBounds(x: number, y: number, margin: number = 0): boolean {
-        const bounds = this.cameraBounds(margin);
+
+
+    public translate(canvas: HTMLCanvasElement, dx: number, dy: number): void {
+        this.x -= dx / this.scale;
+        this.y -= dy / this.scale;
+    }
+
+    public scaleFrom(canvas: HTMLCanvasElement, newScale: number, aroundX: number, aroundY: number): void {
+        const lastCenterX = this.x + (canvas.width / this.scale) * (aroundX / canvas.width - 0.5);
+        const lastCenterY = this.y + (canvas.height / this.scale) * (aroundY / canvas.height - 0.5);
+
+        this.scale = newScale;
+
+        const centerX = this.x + (canvas.width / this.scale) * (aroundX / canvas.width - 0.5);
+        const centerY = this.y + (canvas.height / this.scale) * (aroundY / canvas.height - 0.5);
+
+        this.x -= centerX - lastCenterX;
+        this.y -= centerY - lastCenterY;
+    }
+
+
+
+    public bounds(canvas: HTMLCanvasElement, round: boolean, margin: number = 0): { minX: number, minY: number, maxX: number, maxY: number } {
+        const minX = this.x - canvas.width / this.scale / 2 - margin;
+        const minY = this.y - canvas.height / this.scale / 2 - margin;
+        const maxX = this.x + canvas.width / this.scale / 2 + margin;
+        const maxY = this.y + canvas.height / this.scale / 2 + margin;
+        return round ? {
+            minX: Math.floor(minX),
+            minY: Math.floor(minY),
+            maxX: Math.ceil(maxX),
+            maxY: Math.ceil(maxY)
+        } : {
+            minX, minY, maxX, maxY
+        }
+    }
+
+    public inBounds(canvas: HTMLCanvasElement, x: number, y: number, margin: number = 0): boolean {
+        const bounds = this.bounds(canvas, false, margin);
         return (
             x >= bounds.minX && x <= bounds.maxX &&
             y >= bounds.minY && y <= bounds.maxY
         );
     }
 
-    public cameraPos(canvasX: number, canvasY: number): { x: number, y: number } {
-        return {
-            x: Math.floor(canvasX / this.cameraZoom + this.cameraX),
-            y: Math.floor(canvasY / this.cameraZoom + this.cameraY),
+    public canvasPos(canvas: HTMLCanvasElement, x: number, y: number, floor: boolean): { x: number, y: number } {
+        const cX = (x - canvas.width / 2) / this.scale + this.x;
+        const cY = (y - canvas.height / 2) / this.scale + this.y;
+        return floor ? {
+            x: Math.floor(cX),
+            y: Math.floor(cY)
+        } : {
+            x: cX, y: cY
         }
     }
 
-    public transformCtx(ctx: CanvasRenderingContext2D): void {
-        ctx.scale(this.cameraZoom, this.cameraZoom);
-        ctx.translate(-this.cameraX, -this.cameraY);
+
+
+    public transformCtx(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(this.scale, this.scale);
+        ctx.translate(-this.x, -this.y);
     }
 
-    public forEachTileInViewport(callbackfn: (tile: ValidTile) => void, margin: number = 0): void {
-        const bounds = this.cameraBounds(margin);
+    public forEachTileInViewport(canvas: HTMLCanvasElement, callbackfn: (tile: ValidTile) => void, margin: number = 0): void {
+        const bounds = this.bounds(canvas, true, margin);
         for(let x = bounds.minX; x < bounds.maxX; x++) {
             for(let y = bounds.minY; y < bounds.maxY; y++) {
                 const tile = this.world.getTile(x, y);
@@ -121,8 +123,8 @@ export class Viewport extends EventDispatcher<{
         }
     }
 
-    public forEachChunkInViewport(callbackfn: (chunk: GeneratedChunk) => void, margin: number = 0): void {
-        const bounds = this.cameraBounds(margin);
+    public forEachChunkInViewport(canvas: HTMLCanvasElement, callbackfn: (chunk: GeneratedChunk) => void, margin: number = 0): void {
+        const bounds = this.bounds(canvas, true, margin);
         bounds.minX = Math.floor(bounds.minX / CHUNK_SIZE);
         bounds.minY = Math.floor(bounds.minY / CHUNK_SIZE);
         bounds.maxX = Math.ceil(bounds.maxX / CHUNK_SIZE);
@@ -134,10 +136,6 @@ export class Viewport extends EventDispatcher<{
                 callbackfn(chunk);
             }
         }
-    }
-
-    public change(): void {
-        this.dispatchEvent('change', null);
     }
 
 }

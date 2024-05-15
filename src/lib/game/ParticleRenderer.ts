@@ -64,7 +64,7 @@ export class ParticleRenderer {
 
     private renderParticles(dt: number): void {
         this.ctx.imageSmoothingEnabled = false;
-        this.viewport.transformCtx(this.ctx);
+        this.viewport.transformCtx(this.canvas, this.ctx);
 
         for(let i = 0; i < this.particles.length; i++) {
             const particle = this.particles[i];

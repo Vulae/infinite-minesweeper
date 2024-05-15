@@ -5,7 +5,7 @@
         viewport: {
             x: number;
             y: number;
-            zoom: number;
+            scale: number;
         };
     }
 </script>
@@ -60,9 +60,7 @@
                 <button
                     class="flex flex-col ml-4 hover:text-blue-800 transition-colors"
                     on:click={() => {
-                        viewport.cameraZoom = bookmark.viewport.zoom;
-                        viewport.cameraX = bookmark.viewport.x - viewport.cameraWidth() / 2;
-                        viewport.cameraY = bookmark.viewport.y - viewport.cameraHeight() / 2;
+                        viewport.load(bookmark.viewport);
                         viewport.change();
                         visible = false;
                     }}
@@ -104,11 +102,7 @@
             bookmarks?.push({
                 name: newBookmarkNameInput.value,
                 createdAt: new Date(),
-                viewport: {
-                    x: viewport.cameraX + viewport.cameraWidth() / 2,
-                    y: viewport.cameraY + viewport.cameraHeight() / 2,
-                    zoom: viewport.cameraZoom
-                }
+                viewport: viewport.save()
             });
             bookmarks = bookmarks;
             newBookmarkNameInput.value = '';

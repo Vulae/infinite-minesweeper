@@ -7,6 +7,7 @@
     import { ParticleRenderer } from "$lib/game/ParticleRenderer";
     import type { Theme } from "$lib/game/theme/Theme";
     import Controller from "./controller/Controller.svelte";
+    import type { EventListener } from "$lib/EventDispatcher";
     const dispatcher = createEventDispatcher();
 
     export let world: World;
@@ -33,28 +34,35 @@
         particleRenderer.render();
     }
 
+    let worldListener: EventListener;
+    let viewportListener: EventListener;
+
     onMount(async () => {
         worldRenderer = new WorldRenderer(world, theme, worldCanvas, viewport);
         particleRenderer = new ParticleRenderer(world, theme, particleCanvas, viewport);
+
+        worldListener = world.addEventListener('change', () => {
+            worldNeedsRerender = true;
+        });
+        viewportListener = viewport.addEventListener('change', () => {
+            worldNeedsRerender = true;
+        });
 
         // FIXME: Why is this not always accurate.
         // Sometimes renderer.init() does not load theme fully before returning.
         await worldRenderer.init();
         await particleRenderer.init();
         setTimeout(() => {
-            viewport.setSize(worldCanvas.width, worldCanvas.height);
             worldNeedsRerender = true;
             render();
         }, 100);
-
-        viewport.addEventListener('change', () => {
-            worldNeedsRerender = true;
-        });
     });
 
     onDestroy(() => {
         worldRenderer.destroy();
         particleRenderer.destroy();
+        world.removeEventListener(worldListener);
+        viewport.removeEventListener(viewportListener);
         cancelAnimationFrame(animFrame);
     });
 
@@ -67,29 +75,29 @@
         worldCanvas.height = height;
         particleCanvas.width = width;
         particleCanvas.height = height;
-        viewport.setSize(width, height);
-        viewport.cameraScale(1);
-        worldNeedsRerender = true;
         // Force early rerender to prevent rendered world to flash.
+        viewport.change();
         render();
     }}
 >
     <Controller
         class="w-full h-full force-overlap"
         on:move={ev => {
-            viewport.cameraTranslate(ev.detail.dx, ev.detail.dy);
+            viewport.translate(worldCanvas, ev.detail.dx, ev.detail.dy);
+            viewport.change();
         }}
         on:zoom={ev => {
-            viewport.cameraScale(ev.detail.amount, ev.detail.x / viewport.width, ev.detail.y / viewport.height);
+            viewport.scaleFrom(worldCanvas, viewport.scale * ev.detail.amount, ev.detail.x, ev.detail.y);
+            viewport.change();
         }}
         on:input={ev => {
-            const pos = viewport.cameraPos(ev.detail.x, ev.detail.y);
+            const pos = viewport.canvasPos(worldCanvas, ev.detail.x, ev.detail.y, true);
             switch(ev.detail.type) {
                 case 'primary': dispatcher('action', { type: 'reveal', pos }); break;
                 case 'secondary': dispatcher('action', { type: 'flag', pos }); break;
                 case 'extra': dispatcher('action', { type: 'reset', pos }); break;
             }
-            worldNeedsRerender = true;
+            world.change();
         }}
     >
         <canvas bind:this={worldCanvas} />
