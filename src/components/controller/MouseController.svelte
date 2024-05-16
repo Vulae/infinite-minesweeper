@@ -88,6 +88,7 @@
         dispatcher('zoom', {
             x: ev.offsetX,
             y: ev.offsetY,
+            amountType: 'absolute',
             amount: ev.deltaY > 0 ? 0.9 : 1.1
         });
     }}

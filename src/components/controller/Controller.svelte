@@ -13,6 +13,7 @@
         zoom: {
             x: number;
             y: number;
+            amountType: 'relative' | 'absolute';
             amount: number;
         };
         input: {
@@ -27,6 +28,7 @@
 
 <script lang="ts">
     import MouseController from "./MouseController.svelte";
+    import TouchController from "./TouchController.svelte";
     const dispatcher = createControllerDispatcher();
 
     let _class: string = '';
@@ -48,7 +50,14 @@
 {:else if inputMethod == 'keyboard'}
     <span>Keyboard input method not implemented.</span>
 {:else if inputMethod == 'touch'}
-    <span>Touch input method not implemented.</span>
+    <TouchController
+        class={_class}
+        on:move={ev => dispatcher('move', ev.detail)}
+        on:zoom={ev => dispatcher('zoom', ev.detail)}
+        on:input={ev => dispatcher('input', ev.detail)}
+    >
+        <slot />
+    </TouchController>
 {:else}
     <span>Unsupported input method.</span>
 {/if}

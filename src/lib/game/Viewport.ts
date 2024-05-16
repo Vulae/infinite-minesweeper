@@ -69,6 +69,23 @@ export class Viewport extends EventDispatcher<{
         this.y -= centerY - lastCenterY;
     }
 
+    public clampScale(canvas: HTMLCanvasElement, scale: number, minTiles: number, maxTiles: number): number {
+        if(canvas.width / scale < minTiles) {
+            scale = canvas.width / minTiles;
+        }
+        if(canvas.height / scale < minTiles) {
+            scale = canvas.height / minTiles;
+        }
+        if(canvas.width / scale > maxTiles) {
+            scale = canvas.width / maxTiles;
+        }
+        if(canvas.height / scale > maxTiles) {
+            scale = canvas.height / maxTiles;
+        }
+
+        return scale;
+    }
+
 
 
     public bounds(canvas: HTMLCanvasElement, round: boolean, margin: number = 0): { minX: number, minY: number, maxX: number, maxY: number } {

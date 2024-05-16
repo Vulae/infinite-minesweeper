@@ -87,7 +87,9 @@
             viewport.change();
         }}
         on:zoom={ev => {
-            viewport.scaleFrom(worldCanvas, viewport.scale * ev.detail.amount, ev.detail.x, ev.detail.y);
+            const newScale = ev.detail.amountType == 'relative' ? (viewport.scale * ev.detail.amount) : (viewport.scale + (ev.detail.amount - 1));
+            const clampedScale = viewport.clampScale(worldCanvas, newScale, 0, 32);
+            viewport.scaleFrom(worldCanvas, clampedScale, ev.detail.x, ev.detail.y);
             viewport.change();
         }}
         on:input={ev => {
