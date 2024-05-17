@@ -8,7 +8,11 @@
     import type { Theme } from "$lib/game/theme/Theme";
     import Controller from "./controller/Controller.svelte";
     import type { EventListener } from "$lib/EventDispatcher";
+    import { inputMethod } from "../store";
+    import type { Unsubscriber } from "svelte/store";
     const dispatcher = createEventDispatcher();
+
+    let container: HTMLDivElement;
 
     export let world: World;
     export let theme: Theme;
@@ -18,9 +22,27 @@
     // We separate world & particles to improve performance, not needing to render both at the same time.
     let worldRenderer: WorldRenderer;
     let worldCanvas: HTMLCanvasElement;
+    const initWorldRenderer = async () => {
+        worldRenderer?.destroy();
+        if(!worldCanvas) return;
+        worldRenderer = new WorldRenderer(world, theme, worldCanvas, viewport);
+        await worldRenderer.init();
+        worldCanvas.width = container.clientWidth;
+        worldCanvas.height = container.clientHeight;
+        worldNeedsRerender = true;
+        render();
+    }
 
     let particleRenderer: ParticleRenderer;
     let particleCanvas: HTMLCanvasElement;
+    const initParticleRenderer = async () => {
+        particleRenderer?.destroy();
+        if(!particleCanvas) return;
+        particleRenderer = new ParticleRenderer(world, theme, particleCanvas, viewport);
+        await particleRenderer.init();
+        particleCanvas.width = container.clientWidth;
+        particleCanvas.height = container.clientHeight;
+    }
 
     let worldNeedsRerender: boolean = false;
     let animFrame: number = -1;
@@ -29,17 +51,18 @@
         animFrame = requestAnimationFrame(render);
         if(worldNeedsRerender) {
             worldNeedsRerender = false;
-            worldRenderer.render();
+            worldRenderer?.render();
         }
-        particleRenderer.render();
+        particleRenderer?.render();
     }
 
     let worldListener: EventListener;
     let viewportListener: EventListener;
+    let inputMethodListener: Unsubscriber;
 
     onMount(async () => {
-        worldRenderer = new WorldRenderer(world, theme, worldCanvas, viewport);
-        particleRenderer = new ParticleRenderer(world, theme, particleCanvas, viewport);
+        await initWorldRenderer();
+        await initParticleRenderer();
 
         worldListener = world.addEventListener('change', () => {
             worldNeedsRerender = true;
@@ -47,48 +70,48 @@
         viewportListener = viewport.addEventListener('change', () => {
             worldNeedsRerender = true;
         });
-
-        // FIXME: Why is this not always accurate.
-        // Sometimes renderer.init() does not load theme fully before returning.
-        await worldRenderer.init();
-        await particleRenderer.init();
-        setTimeout(() => {
-            worldNeedsRerender = true;
-            render();
-        }, 100);
+        inputMethodListener = inputMethod.subscribe(() => {
+            // ??? Why need to wait here?
+            setTimeout(async () => {
+                await initWorldRenderer();
+                await initParticleRenderer();
+            }, 100);
+        });
     });
 
     onDestroy(() => {
-        worldRenderer.destroy();
-        particleRenderer.destroy();
+        worldRenderer?.destroy();
+        particleRenderer?.destroy();
         world.removeEventListener(worldListener);
         viewport.removeEventListener(viewportListener);
+        inputMethodListener();
         cancelAnimationFrame(animFrame);
     });
 
 </script>
 
 <div
+    bind:this={container}
     class="w-full h-full cursor-pointer"
     use:resize={(width, height) => {
         worldCanvas.width = width;
         worldCanvas.height = height;
         particleCanvas.width = width;
         particleCanvas.height = height;
-        // Force early rerender to prevent rendered world to flash.
         viewport.change();
         render();
     }}
 >
     <Controller
         class="w-full h-full force-overlap"
+        inputMethod={$inputMethod}
         on:move={ev => {
             viewport.translate(worldCanvas, ev.detail.dx, ev.detail.dy);
             viewport.change();
         }}
         on:zoom={ev => {
             const newScale = ev.detail.amountType == 'relative' ? (viewport.scale * ev.detail.amount) : (viewport.scale + (ev.detail.amount - 1));
-            const clampedScale = viewport.clampScale(worldCanvas, newScale, 0, 32);
+            const clampedScale = viewport.clampScale(worldCanvas, newScale, 4, 32);
             viewport.scaleFrom(worldCanvas, clampedScale, ev.detail.x, ev.detail.y);
             viewport.change();
         }}

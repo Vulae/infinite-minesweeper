@@ -24,6 +24,9 @@
     }> {
         return createEventDispatcher();
     }
+
+    export type InputMethod = 'mouse' | 'keyboard' | 'touch';
+
 </script>
 
 <script lang="ts">
@@ -34,7 +37,7 @@
     let _class: string = '';
     export { _class as class };
 
-    export let inputMethod: 'mouse' | 'keyboard' | 'touch' = 'mouse';
+    export let inputMethod: InputMethod = 'mouse';
 
 </script>
 

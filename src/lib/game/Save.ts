@@ -19,7 +19,7 @@ function newWorld(saveSlot: string, overwrite: boolean): { world: World, spawnX:
 
 function newSave(saveSlot: string, overwrite: boolean): Save {
     const { world, spawnX, spawnY } = newWorld(saveSlot, overwrite);
-    const viewport = new Viewport(world, { x: spawnX, y: spawnY, scale: 32 });
+    const viewport = new Viewport(world, { x: spawnX, y: spawnY, scale: 48 });
     return {
         world,
         viewport,

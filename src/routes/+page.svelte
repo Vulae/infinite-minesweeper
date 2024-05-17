@@ -9,18 +9,29 @@
     import BookmarksModal, { type Bookmark } from "$components/BookmarksModal.svelte";
     import type { Viewport } from "$lib/game/Viewport";
     import LucideBookmark from "lucide-svelte/icons/bookmark";
+    import SettingsModal from "$components/SettingsModal.svelte";
+    import LucideSettings from "lucide-svelte/icons/settings";
+    import { onMount } from "svelte";
+    import { autoDisplayInfo } from "../store";
 
     let saveSlot: string = 'save';
 
     let layout: 'vertical' | 'horizontal' = 'vertical';
     let layoutSide: 'start' | 'end' = 'end';
 
-    let infoModalVisible: boolean = true;
+    let infoModalVisible: boolean = false;
+    let settingsModalVisible: boolean = false;
     let bookmarksModalVisible: boolean = false;
 
     let world: World;
     let viewport: Viewport;
     let bookmarks: Bookmark[] = [];
+
+    onMount(() => {
+        if($autoDisplayInfo) {
+            infoModalVisible = true;
+        }
+    });
 
 </script>
 
@@ -31,7 +42,7 @@
     <!-- TODO: transition-opacity, the backdrop blur breaks when opacity is less than 1, So the blur needs to be done another way. -->
     <div
         class="w-full h-full col-start-1 col-end-1 row-start-1 row-end-1 pointer-events-none"
-        style:opacity={(infoModalVisible || bookmarksModalVisible) ? 0 : 1}
+        style:opacity={(infoModalVisible || settingsModalVisible || bookmarksModalVisible) ? 0 : 1}
         use:resize={(width, height) => {
             layout = (width > height) ? 'vertical' : 'horizontal';
             layoutSide = (width > height) ? 'end' : 'start';
@@ -58,6 +69,13 @@
                 </button>
                 <button
                     class="rounded-full drop-shadow-sm"
+                    on:click={() => settingsModalVisible = true}
+                    title="Settings"
+                >
+                    <LucideSettings />
+                </button>
+                <button
+                    class="rounded-full drop-shadow-sm"
                     on:click={() => bookmarksModalVisible = true}
                     title="Bookmarks"
                 >
@@ -72,6 +90,10 @@
 
 <Modal bind:visible={infoModalVisible}>
     <InfoModal />
+</Modal>
+
+<Modal bind:visible={settingsModalVisible}>
+    <SettingsModal bind:saveSlot />
 </Modal>
 
 <Modal bind:visible={bookmarksModalVisible}>

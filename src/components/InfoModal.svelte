@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { ArrayElement } from "$lib/Util";
+    import { inputMethod } from "../store";
     import InfoModalBiomes from "./InfoModalBiomes.svelte";
 
     const tabNames = [ 'Information', 'Biomes', 'Controls' ] as const;
@@ -58,23 +59,36 @@
             </div>
         {:else if currentTab == 'Controls'}
             <div class="px-4">
-                <span>
-                    Left Click: Reveal tile
-                    <br />
-                    Right Click: Flag tile
-                    <br />
-                    Middle Click: Move view
-                    <br />
-                    Scroll Wheel: Zoom view
-                    <br />
-                    <br />
-                    Arrow Keys: Move view
-                    <br />
-                    Open Square Bracket '[': View zoom In
-                    <br />
-                    Close Square Bracket ']': View zoom Out
-                    <br />
-                </span>
+                {#if $inputMethod == 'mouse'}
+                    <span>
+                        <h1 class="font-bold text-2xl">Mouse Controls</h1>
+                        Left Click: Reveal tile
+                        <br />
+                        Right Click: Flag tile
+                        <br />
+                        Left Click Drag: Move view
+                        <br />
+                        Scroll Wheel: Zoom view
+                    </span>
+                {:else if $inputMethod == 'keyboard'}
+                    <span>
+                        <h1 class="font-bold text-2xl">Keyboard Controls</h1>
+                        Keyboard control method not yet supported.
+                    </span>
+                {:else if $inputMethod == 'touch'}
+                    <span>
+                        <h1 class="font-bold text-2xl">Touch Controls</h1>
+                        Double Tap: Reveal tile
+                        <br />
+                        Single Tap: Flag tile
+                        <br />
+                        Pan: Move view
+                        <br />
+                        Pinch: Zoom view
+                    </span>
+                {:else}
+                    <span>Unknown control method.</span>
+                {/if}
             </div>
         {/if}
     </div>
