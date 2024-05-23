@@ -1,7 +1,8 @@
 
-import { bitsToRepresentValue, type BitIO } from "$lib/BitIO";
+import * as bt from "bintype";
 import type { World } from "../World";
 import { Tile, type ValidTile } from "./Tile";
+import { bitsToRepresentValue } from "$lib/Util";
 
 export abstract class MultiMineTile extends Tile {
     public readonly _numMines: number;
@@ -47,22 +48,22 @@ export abstract class MultiMineTile extends Tile {
 
     
 
-    public save(io: BitIO): void {
-        io.writeBit(this.isRevealed);
+    public save(io: bt.BitIO): void {
+        io.putBit(this.isRevealed);
         if(!this.isRevealed) {
-            io.writeBits(bitsToRepresentValue(this.numMaxMines), this._numFlags);
+            io.putBits(this._numFlags, bitsToRepresentValue(this.numMaxMines));
         }
     }
 
-    protected static loadInternal<T extends MultiMineTile>(tile: T, io: BitIO): T {
-        tile.isRevealed = io.readBit();
+    protected static loadInternal<T extends MultiMineTile>(tile: T, io: bt.BitIO): T {
+        tile.isRevealed = io.getBit();
         if(!tile.isRevealed) {
-            tile._numFlags = io.readBits(bitsToRepresentValue(tile.numMaxMines));
+            tile._numFlags = io.getBits(bitsToRepresentValue(tile.numMaxMines));
         }
         return tile;
     }
 
-    public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
+    public static load(world: World, x: number, y: number, io: bt.BitIO): ValidTile {
         throw new Error('MultiMineTile.load needs to be implemented on derived class.');
     }
 }

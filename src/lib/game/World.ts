@@ -3,10 +3,10 @@ import { Chunk, GeneratedChunk } from "./Chunk";
 import { CHUNK_SIZE } from "./Constants";
 import { generateTile } from "./Generator";
 import { splitmix32 } from "../RNG";
-import type { ValidTile } from "./tile/Tile";
+import { TILE_NONE_NEARBY, type ValidTile } from "./tile/Tile";
 import { EventDispatcher } from "$lib/EventDispatcher";
-import * as b from "$lib/BinType";
-import { F_WORLD } from "./Save";
+import { F_CHUNK, F_WORLD } from "./Save";
+import * as bt from "bintype";
 
 
 
@@ -134,7 +134,7 @@ export class World extends EventDispatcher<{
         let stack: ValidTile[] = [ ];
         // If either of strawberry nearby mine values is right.
         if(tile.type == 'strawberry') {
-            const nearbySecondary = tile.minesNearbySecondary(false);
+            const nearbySecondary = tile.secondaryMinesNearby(false);
             if(nearbySecondary != null && nearbySecondary == tile.flagsNearby()) {
                 stack.push(tile);
             }
@@ -153,7 +153,7 @@ export class World extends EventDispatcher<{
                     stack.some(t => t.x == nTile.x && t.y == nTile.y) ||
                     reveal.some(t => t.x == nTile.x && t.y == nTile.y)
                 ) continue;
-                if(nTile.minesNearby() == 0) {
+                if(nTile.minesNearby() == TILE_NONE_NEARBY) {
                     stack.push(nTile);
                 } else {
                     reveal.push(nTile);
@@ -164,7 +164,7 @@ export class World extends EventDispatcher<{
         for(const r of reveal) {
             if(r.reveal()) {
                 this._revealCount++;
-                if(r.numMines() > 0) {
+                if(r.numMines() != 0) {
                     this._died = true;
                     this.dispatchEvent('particle_explosion', { x: r.x, y: r.y });
                     this.dispatchEvent('die', { x: r.x, y: r.y });
@@ -202,7 +202,7 @@ export class World extends EventDispatcher<{
     public closest0(offsetX: number, offsetY: number): { x: number, y: number } {
         for(const { x, y } of spiralIter(offsetX, offsetY)) {
             const tile = this.getTile(x, y);
-            if(tile.numMines() == 0 && tile.minesNearby() == 0) {
+            if(tile.numMines() == 0 && tile.minesNearby() == TILE_NONE_NEARBY) {
                 return { x, y };
             }
         }
@@ -211,35 +211,34 @@ export class World extends EventDispatcher<{
 
 
 
-    public save(): b.ParserType<typeof F_WORLD> {
-        const obj: b.ParserType<typeof F_WORLD> = {
+    public save(): bt.ParserType<typeof F_WORLD> {
+        const obj: bt.ParserType<typeof F_WORLD> = {
             seed: this.seed,
             createdAt: this.createdAt,
             numDeaths: this.deaths,
-            chunks: { }
+            chunks: new Map()
         };
 
         for(const _chunkCoord in this.chunks) {
             const chunkCoord = _chunkCoord as ChunkCoordinate;
             const chunk = this.chunks[chunkCoord];
-            obj.chunks[chunkCoord] = chunk.save();
+            obj.chunks.set(chunkCoord, chunk.save());
         }
 
         return obj;
     }
 
-    public static load(save: b.ParserType<typeof F_WORLD>): World {
+    public static load(save: bt.ParserType<typeof F_WORLD>): World {
         const world = new World(save.seed);
         world.createdAt = save.createdAt;
         world.deaths = save.numDeaths;
 
-        for(const _chunkCoord in save.chunks) {
-            const chunkCoord = _chunkCoord as ChunkCoordinate;
-            const [ _, chunkXstr, chunkYstr ] = chunkCoord.match(/^(-?\d+),(-?\d+)$/)!;
+        save.chunks.forEach((chunk, _coord) => {
+            const coord = _coord as ChunkCoordinate;
+            const [ _, chunkXstr, chunkYstr ] = coord.match(/^(-?\d+),(-?\d+)$/)!;
             const [ chunkX, chunkY ] = [ parseInt(chunkXstr), parseInt(chunkYstr) ];
-            const savedChunk = save.chunks[chunkCoord];
-            world.chunks[chunkCoord] = GeneratedChunk.load(world, chunkX, chunkY, savedChunk);
-        }
+            world.chunks[coord] = GeneratedChunk.load(world, chunkX, chunkY, chunk);
+        });
 
         return world;
     }

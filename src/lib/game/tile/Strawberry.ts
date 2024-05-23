@@ -1,9 +1,9 @@
 
-import type { BitIO } from "$lib/BitIO";
 import { hashNormal } from "$lib/RNG";
 import type { World } from "../World";
 import { SingleMineTile } from "./SingleMine";
-import type { ValidTile } from "./Tile";
+import { TILE_NONE_NEARBY, type ValidTile } from "./Tile";
+import * as bt from "bintype";
 
 
 
@@ -21,16 +21,17 @@ export class StrawberryTile extends SingleMineTile {
         }
     }
 
-    public minesNearbySecondary(useCache: boolean = false): number | null {
+    public secondaryMinesNearby(useCache: boolean): number | null {
+        // TODO: What to do with negative number of mines here?
         if(this.secondaryNearbyCountModifier == null) return null;
         const nearby = this.minesNearby(useCache);
-        if(nearby <= 0) return null;
-        const nearbySecondary = nearby + this.secondaryNearbyCountModifier;
-        if(nearbySecondary <= 0) return null;
-        return nearbySecondary;
+        if(nearby == TILE_NONE_NEARBY || nearby < 1) return null;
+        const nearby2 = nearby + this.secondaryNearbyCountModifier;
+        if(nearby2 <= 0) return null;
+        return nearby2;
     }
 
-    public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
+    public static load(world: World, x: number, y: number, io: bt.BitIO): ValidTile {
         return this.loadInternal(new StrawberryTile(world, x, y), io);
     }
 }

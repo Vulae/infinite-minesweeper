@@ -27,6 +27,20 @@ export function mapRangeInt(value: number, valueMin: number, valueMax: number, o
 
 
 
+/**
+ * @param value UNSIGNED VALUE
+ */
+export function bitsToRepresentValue(value: number): number {
+    let count = 0;
+    while(value) {
+        value &= value - 1;
+        count++;
+    }
+    return count;
+}
+
+
+
 export function createCanvasCtx(width: number, height: number): [ HTMLCanvasElement, CanvasRenderingContext2D ];
 export function createCanvasCtx(img: HTMLImageElement): [ HTMLCanvasElement, CanvasRenderingContext2D ];
 export function createCanvasCtx(canvas: HTMLCanvasElement): [ HTMLCanvasElement, CanvasRenderingContext2D ];

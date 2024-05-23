@@ -1,5 +1,5 @@
 
-import type { BitIO } from "$lib/BitIO";
+import * as bt from "bintype";
 import { hashNormal } from "$lib/RNG";
 import type { World } from "../World";
 import { SingleMineTile } from "./SingleMine";
@@ -15,7 +15,7 @@ export class VanillaTile extends SingleMineTile {
         super(world, x, y, isMine);
     }
 
-    public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
+    public static load(world: World, x: number, y: number, io: bt.BitIO): ValidTile {
         return this.loadInternal(new VanillaTile(world, x, y), io);
     }
 }

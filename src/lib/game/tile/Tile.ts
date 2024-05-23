@@ -1,5 +1,5 @@
 
-import type { BitIO } from "$lib/BitIO";
+import * as bt from "bintype";
 import { CHUNK_SIZE } from "../Constants";
 import type { World } from "../World";
 import type { BlueberryTile } from "./Blueberry";
@@ -8,6 +8,13 @@ import type { StrawberryTile } from "./Strawberry";
 import type { StroopwafelTile } from "./Stroopwafel";
 import type { VanillaTile } from "./Vanilla";
 import type { WaffleTile } from "./Waffle";
+
+
+
+export const TILE_NONE_NEARBY = Symbol('TILE_NO_NEARBY');
+export type TILE_NONE_NEARBY= typeof TILE_NONE_NEARBY;
+
+
 
 export abstract class Tile {
     public abstract readonly type: string;
@@ -35,30 +42,34 @@ export abstract class Tile {
      * Mines search pattern
      */
     public abstract readonly searchPattern: { x: number, y: number }[];
-    private minesNearbyCache: number | null = null;
+    private minesNearbyCache: number | TILE_NONE_NEARBY | null = null;
     /**
      * @returns Number of mines in search pattern
      */
-    public minesNearby(useCache: boolean = false): number {
+    public minesNearby(useCache: boolean = false): number | TILE_NONE_NEARBY {
         if(this.minesNearbyCache !== null && useCache) {
             return this.minesNearbyCache;
         }
-        this.minesNearbyCache = 0;
+        let none: boolean = true;
+        let count: number = 0;
         for(const offset of this.searchPattern) {
-            this.minesNearbyCache += this.world.getTile(this.x + offset.x, this.y + offset.y).numMines();
+            count += this.world.getTile(this.x + offset.x, this.y + offset.y).numMines();
+            if(count != 0) none = false;
         }
+        this.minesNearbyCache = (count == 0 && none) ? TILE_NONE_NEARBY : count;
         return this.minesNearbyCache;
     }
     /**
      * @returns Number of flags in search pattern
      */
-    public flagsNearby(): number {
-        // TODO: Cache return value.
+    public flagsNearby(): number | TILE_NONE_NEARBY {
+        let none: boolean = true;
         let count: number = 0;
         for(const offset of this.searchPattern) {
             count += this.world.getTile(this.x + offset.x, this.y + offset.y).numFlags();
+            if(count != 0) none = false;
         }
-        return count;
+        return (count == 0 && none) ? TILE_NONE_NEARBY : count;
     }
 
     /**
@@ -83,8 +94,8 @@ export abstract class Tile {
 
 
 
-    public abstract save(io: BitIO): void;
-    public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
+    public abstract save(io: bt.BitIO): void;
+    public static load(world: World, x: number, y: number, io: bt.BitIO): ValidTile {
         throw new Error('Tile.load needs to be implemented on derived class.');
     }
 }

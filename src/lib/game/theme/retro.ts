@@ -4,7 +4,7 @@ import type { ValidParticle } from "../particle/Particle";
 import type { MultiMineTile } from "../tile/MultiMine";
 import { SingleMineTileState, type SingleMineTile } from "../tile/SingleMine";
 import type { StrawberryTile } from "../tile/Strawberry";
-import type { ValidTile } from "../tile/Tile";
+import { TILE_NONE_NEARBY, type ValidTile } from "../tile/Tile";
 import { Theme, type SoundEffect } from "./Theme";
 
 
@@ -78,9 +78,14 @@ export class ThemeRetro extends Theme {
 
 
 
-    private drawNearby(ctx: CanvasRenderingContext2D, minesNearby: number): void {
+    private drawNearby(ctx: CanvasRenderingContext2D, minesNearby: number | TILE_NONE_NEARBY): void {
+        if(minesNearby == TILE_NONE_NEARBY) return;
+        if(minesNearby < 0) {
+            // TODO: Draw minus sign then draw positive number.
+            return;
+        }
         switch(minesNearby) {
-            case 0: break;
+            case 0: this.tileset.draw(ctx, 'number_0', 0, 0, 1, 1); break;
             case 1: this.tileset.draw(ctx, 'number_1', 0, 0, 1, 1); break;
             case 2: this.tileset.draw(ctx, 'number_2', 0, 0, 1, 1); break;
             case 3: this.tileset.draw(ctx, 'number_3', 0, 0, 1, 1); break;
@@ -105,7 +110,7 @@ export class ThemeRetro extends Theme {
             case 22: this.tileset.draw(ctx, 'number_22', 0, 0, 1, 1); break;
             case 23: this.tileset.draw(ctx, 'number_23', 0, 0, 1, 1); break;
             case 24: this.tileset.draw(ctx, 'number_24', 0, 0, 1, 1); break;
-            default: throw new Error('ThemeRetro invalid draw nearby count.');
+            default: throw new Error(`ThemeRetro invalid draw nearby count. ${minesNearby}`);
         }
     }
 
@@ -159,17 +164,18 @@ export class ThemeRetro extends Theme {
             case SingleMineTileState.Revealed: {
                 this.tileset.draw(ctx, 'tile_strawberry_revealed', 0, 0, 1, 1);
 
-                const nearbySecondary = tile.minesNearbySecondary(true);
-                if(nearbySecondary !== null) {
+                const nearby1 = tile.minesNearby(true);
+                const nearby2 = tile.secondaryMinesNearby(true);
+                if(nearby2 == null) {
+                    this.drawNearby(ctx, nearby1);
+                } else {
                     ctx.save();
                     ctx.scale(0.55, 0.55);
                     ctx.translate(0.1, 0.45);
-                    this.drawNearby(ctx, tile.secondaryNearbyCountRightSide ? tile.minesNearby(true) : nearbySecondary);
+                    this.drawNearby(ctx, tile.secondaryNearbyCountRightSide ? nearby1 : nearby2);
                     ctx.translate(0.7, 0);
-                    this.drawNearby(ctx, tile.secondaryNearbyCountRightSide ? nearbySecondary : tile.minesNearby(true));
+                    this.drawNearby(ctx, tile.secondaryNearbyCountRightSide ? nearby2 : nearby1);
                     ctx.restore();
-                } else {
-                    this.drawNearby(ctx, tile.minesNearby());
                 }
                 break; }
         }

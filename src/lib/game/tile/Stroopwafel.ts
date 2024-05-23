@@ -1,5 +1,5 @@
 
-import type { BitIO } from "$lib/BitIO";
+import * as bt from "bintype";
 import type { World } from "../World";
 import { SingleMineTile } from "./SingleMine";
 import type { ValidTile } from "./Tile";
@@ -18,7 +18,7 @@ export class StroopwafelTile extends SingleMineTile {
         this.isDark = isDark
     }
 
-    public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
+    public static load(world: World, x: number, y: number, io: bt.BitIO): ValidTile {
         return this.loadInternal(new StroopwafelTile(world, x, y), io);
     }
 }

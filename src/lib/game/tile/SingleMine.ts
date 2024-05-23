@@ -1,5 +1,5 @@
 
-import type { BitIO } from "$lib/BitIO";
+import * as bt from "bintype";
 import type { World } from "../World";
 import { Tile, type ValidTile } from "./Tile";
 
@@ -53,24 +53,24 @@ export abstract class SingleMineTile extends Tile {
 
     
 
-    public save(io: BitIO): void {
+    public save(io: bt.BitIO): void {
         if(this.isMine) {
-            io.writeBit(this.state == SingleMineTileState.Flagged);
+            io.putBit(this.state == SingleMineTileState.Flagged);
         } else {
-            io.writeBits(2, this.state);
+            io.putBits(this.state, 2);
         }
     }
 
-    protected static loadInternal<T extends SingleMineTile>(tile: T, io: BitIO): T {
+    protected static loadInternal<T extends SingleMineTile>(tile: T, io: bt.BitIO): T {
         if(tile.isMine) {
-            tile.state = io.readBit() ? SingleMineTileState.Flagged : SingleMineTileState.Covered;
+            tile.state = io.getBit() ? SingleMineTileState.Flagged : SingleMineTileState.Covered;
         } else {
-            tile.state = io.readBits(2);
+            tile.state = io.getBits(2);
         }
         return tile;
     }
 
-    public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
+    public static load(world: World, x: number, y: number, io: bt.BitIO): ValidTile {
         throw new Error('SingleMineTile.load needs to be implemented on derived class.');
     }
 }

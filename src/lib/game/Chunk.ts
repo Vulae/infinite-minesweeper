@@ -1,11 +1,10 @@
 
-import { BitIO } from "../BitIO";
 import { CHUNK_SIZE } from "./Constants";
 import { generateTile, getTileType } from "./Generator";
 import type { World } from "./World";
 import type { ValidTile } from "./tile/Tile";
-import * as b from "$lib/BinType";
 import type { F_CHUNK } from "./Save";
+import * as bt from "bintype";
 
 
 
@@ -78,7 +77,7 @@ export class GeneratedChunk extends Chunk {
 
     
     public encodeTiles(): ArrayBuffer {
-        const io = new BitIO(2048);
+        const io = new bt.BitIO(2048);
         for(const tile of this.tiles) {
             tile.save(io);
         }
@@ -86,7 +85,7 @@ export class GeneratedChunk extends Chunk {
     }
 
     public static decodeTiles(world: World, chunkX: number, chunkY: number, buffer: ArrayBuffer): GeneratedChunk {
-        const io = new BitIO(buffer);
+        const io = new bt.BitIO(buffer);
         let tiles: ValidTile[] = [];
         for(let dy = 0; dy < CHUNK_SIZE; dy++) {
             for(let dx = 0; dx < CHUNK_SIZE; dx++) {
@@ -102,14 +101,14 @@ export class GeneratedChunk extends Chunk {
 
 
 
-    public save(): b.ParserType<typeof F_CHUNK> {
+    public save(): bt.ParserType<typeof F_CHUNK> {
         return {
             deaths: this.deaths,
             tiles: this.encodeTiles()
         };
     }
 
-    public static load(world: World, chunkX: number, chunkY: number, savedChunk: b.ParserType<typeof F_CHUNK>): GeneratedChunk {
+    public static load(world: World, chunkX: number, chunkY: number, savedChunk: bt.ParserType<typeof F_CHUNK>): GeneratedChunk {
         const chunk = GeneratedChunk.decodeTiles(world, chunkX, chunkY, savedChunk.tiles);
         chunk.deaths = savedChunk.deaths;
         return chunk;

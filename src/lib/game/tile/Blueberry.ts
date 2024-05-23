@@ -1,5 +1,5 @@
 
-import type { BitIO } from "$lib/BitIO";
+import * as bt from "bintype";
 import { hashNormal } from "$lib/RNG";
 import { mapRangeInt } from "$lib/Util";
 import type { World } from "../World";
@@ -20,7 +20,7 @@ export class BlueberryTile extends MultiMineTile {
         super(world, x, y, numMines);
     }
 
-    public static load(world: World, x: number, y: number, io: BitIO): ValidTile {
+    public static load(world: World, x: number, y: number, io: bt.BitIO): ValidTile {
         return this.loadInternal(new BlueberryTile(world, x, y), io);
     }
 }
