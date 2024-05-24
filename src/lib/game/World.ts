@@ -32,7 +32,7 @@ function* spiralIter(offsetX: number, offsetY: number): Generator<{ x: number, y
 
 
 
-type ChunkCoordinate = `${number},${number}`;
+export type ChunkCoordinate = `${number},${number}`;
 
 export class World extends EventDispatcher<{
     'change': null;
@@ -233,8 +233,7 @@ export class World extends EventDispatcher<{
         world.createdAt = save.createdAt;
         world.deaths = save.numDeaths;
 
-        save.chunks.forEach((chunk, _coord) => {
-            const coord = _coord as ChunkCoordinate;
+        save.chunks.forEach((chunk, coord) => {
             const [ _, chunkXstr, chunkYstr ] = coord.match(/^(-?\d+),(-?\d+)$/)!;
             const [ chunkX, chunkY ] = [ parseInt(chunkXstr), parseInt(chunkYstr) ];
             world.chunks[coord] = GeneratedChunk.load(world, chunkX, chunkY, chunk);

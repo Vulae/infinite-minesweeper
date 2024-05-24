@@ -1,5 +1,5 @@
 
-import { World } from "./World";
+import { World, type ChunkCoordinate } from "./World";
 import * as bt from "bintype";
 import { Viewport } from "./Viewport";
 import type { Bookmark } from "$components/BookmarksModal.svelte";
@@ -87,11 +87,58 @@ export const F_CHUNK = bt.object({
     tiles: bt.binary()
 });
 
+class ChunkCoordinateParser extends bt.Parser<ChunkCoordinate> {
+    public readonly magic = bt.hashStr('ChunkCoordinateParser');
+
+    public encodeInternal(ctx: bt.EncodeContext, value: ChunkCoordinate): void {
+        const [ _, chunkXstr, chunkYstr ] = value.match(/^(-?\d+),(-?\d+)$/)!;
+        const [ chunkX, chunkY ] = [ parseInt(chunkXstr), parseInt(chunkYstr) ];
+        ctx.encode(new bt.BigIntParser(true), BigInt(chunkX));
+        ctx.encode(new bt.BigIntParser(true), BigInt(chunkY));
+    }
+
+    public decodeInternal(ctx: bt.DecodeContext): ChunkCoordinate {
+        const chunkX = Number(ctx.decode(new bt.BigIntParser(true)));
+        const chunkY = Number(ctx.decode(new bt.BigIntParser(true)));
+        return `${chunkX},${chunkY}`;
+    }
+}
+
+class ChunkCoordinateMapParser<T extends bt.Parser<any>> extends bt.Parser<Map<ChunkCoordinate, bt.ParserType<T>>> {
+    public readonly magic: number;
+    public readonly type: T;
+
+    public constructor(type: T) {
+        super();
+        this.type = type;
+        this.magic = bt.hashStr(`ChunkCoordinateMapParser:${this.type.magic}`);
+    }
+
+    public encodeInternal(ctx: bt.EncodeContext, map: Map<ChunkCoordinate, bt.ParserType<T>>): void {
+        ctx.encode(new bt.BigIntParser(false), BigInt(map.size))
+        for(const [ key, value ] of map.entries()) {
+            ctx.encode(new ChunkCoordinateParser(), key);
+            ctx.encode(this.type, value);
+        }
+    }
+
+    public decodeInternal(ctx: bt.DecodeContext): Map<ChunkCoordinate, bt.ParserType<T>> {
+        const map: Map<ChunkCoordinate, bt.ParserType<T>> = new Map();
+        const size = Number(ctx.decode(new bt.BigIntParser(false)));
+        for(let i = 0; i < size; i++) {
+            const key = ctx.decode(new ChunkCoordinateParser());
+            const value = ctx.decode(this.type);
+            map.set(key, value);
+        }
+        return map;
+    }
+}
+
 export const F_WORLD = bt.object({
     seed: bt.number('u32'),
     createdAt: bt.date(),
     numDeaths: bt.number('u32'),
-    chunks: bt.map(bt.string(), F_CHUNK)
+    chunks: new ChunkCoordinateMapParser(F_CHUNK)
 });
 
 export const F_VIEWPORT = bt.object({
