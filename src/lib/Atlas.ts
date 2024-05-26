@@ -1,4 +1,4 @@
-import { createCanvasCtx } from "./Util";
+import { createCanvas2dContext } from "./Util";
 
 
 
@@ -61,9 +61,9 @@ export class TextureAtlas<Textures extends {
     public toImageDataAtlas(): TextureAtlasImageData<{
         [key in keyof Textures]: ImageData;
     }> {
-        const [ canvas, ctx ] = createCanvasCtx(this.img.width, this.img.height);
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(this.img, 0, 0);
+        const [ canvas, ctx ] = this.img instanceof HTMLCanvasElement ?
+            createCanvas2dContext(this.img, true, { willReadFrequently: false }) :
+            createCanvas2dContext(this.img, { willReadFrequently: false });
 
         return new TextureAtlasImageData(
             Object.fromEntries(Object.entries(this.textures).map(([ name, [ x, y, width, height ] ]) => {
@@ -115,7 +115,7 @@ export class TextureAtlasImageData<Textures extends {
         }
 
         // To image
-        const [ canvas, ctx ] = createCanvasCtx(atlasWidth, atlasHeight);
+        const [ canvas, ctx ] = createCanvas2dContext(atlasWidth, atlasHeight);
         for(const name in rects) {
             const rect = rects[name]!;
             ctx.putImageData(this.textures[name], rect.x, rect.y);
