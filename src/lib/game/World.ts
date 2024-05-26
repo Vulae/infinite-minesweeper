@@ -5,30 +5,9 @@ import { generateTile } from "./Generator";
 import { splitmix32 } from "../RNG";
 import { TILE_NONE_NEARBY, type ValidTile } from "./tile/Tile";
 import { EventDispatcher } from "$lib/EventDispatcher";
-import { F_CHUNK, F_WORLD } from "./Save";
+import { F_WORLD } from "./Save";
 import * as bt from "bintype";
-
-
-
-// https://stackoverflow.com/questions/398299#answer-33639875
-function* spiralIter(offsetX: number, offsetY: number): Generator<{ x: number, y: number }> {
-    let x = offsetX;
-    let y = offsetY;
-    let d = 1;
-    let m = 1;
-    while(true) {
-        while(2 * x * d < m) {
-            yield { x, y };
-            x += d;
-        }
-        while(2 * y * d < m) {
-            yield { x, y };
-            y += d;
-        }
-        d = -1 * d;
-        m += 1;
-    }
-}
+import { spiralIter } from "$lib/Util";
 
 
 
@@ -120,7 +99,7 @@ export class World extends EventDispatcher<{
         const tile = this.getTile(x, y);
         if(tile.reveal()) {
             this._revealCount++;
-            if(tile.numMines() > 0) {
+            if(tile.numMines() != 0) {
                 this._died = true;
                 this.dispatchEvent('particle_explosion', { x: tile.x, y: tile.y });
                 this.dispatchEvent('die', { x: tile.x, y: tile.y });

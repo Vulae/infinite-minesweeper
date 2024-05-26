@@ -41,7 +41,7 @@ export class ParticleRenderer {
             if(tile instanceof MultiMineTile) {
                 this.particles.push(new ParticleFlag(x, y, true, tile.numMaxMines));
             } else {
-                this.particles.push(new ParticleFlag(x, y, false, 1));
+                this.particles.push(new ParticleFlag(x, y, false, tile.type == 'cookies_and_cream' ? -1 : 1));
             }
         }));
         this.listeners.push(this.world.addEventListener('particle_explosion', ({ data: { x, y } }) => {

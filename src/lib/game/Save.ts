@@ -147,7 +147,7 @@ export const F_VIEWPORT = bt.object({
     scale: bt.number('f64')
 });
 
-export const F_SAVE = bt.modifyhash('v1.0.5', bt.object({
+export const F_SAVE = bt.modifyhash('v1.0.6', bt.object({
     world: F_WORLD,
     viewport: F_VIEWPORT,
     bookmarks: bt.array(bt.object({

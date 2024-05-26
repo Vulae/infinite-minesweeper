@@ -57,7 +57,12 @@ export abstract class SingleMineTile extends Tile {
         if(this.isMine) {
             io.putBit(this.state == SingleMineTileState.Flagged);
         } else {
-            io.putBits(this.state, 2);
+            if(this.state == SingleMineTileState.Covered) {
+                io.putBit(false);
+            } else {
+                io.putBit(true);
+                io.putBit(this.state == SingleMineTileState.Flagged);
+            }
         }
     }
 
@@ -65,7 +70,11 @@ export abstract class SingleMineTile extends Tile {
         if(tile.isMine) {
             tile.state = io.getBit() ? SingleMineTileState.Flagged : SingleMineTileState.Covered;
         } else {
-            tile.state = io.getBits(2);
+            if(!io.getBit()) {
+                tile.state = SingleMineTileState.Covered;
+            } else {
+                tile.state = io.getBit() ? SingleMineTileState.Flagged : SingleMineTileState.Revealed;
+            }
         }
         return tile;
     }

@@ -3,9 +3,10 @@ import { TextureAtlas } from "../../Atlas";
 import type { ValidParticle } from "../particle/Particle";
 import type { MultiMineTile } from "../tile/MultiMine";
 import { SingleMineTileState, type SingleMineTile } from "../tile/SingleMine";
-import type { StrawberryTile } from "../tile/Strawberry";
+import type { StrawberryTile } from "../tile/biome/Strawberry";
 import { TILE_NONE_NEARBY, type ValidTile } from "../tile/Tile";
 import { Theme, type SoundEffect } from "./Theme";
+import { SingleAntiMineTileState, type SingleAntiMineTile } from "../tile/SingleAntiMine";
 
 
 
@@ -24,9 +25,13 @@ export class ThemeRetro extends Theme {
         explosion3: [ 16, 48, 16, 16 ],
         explosion4: [ 16, 64, 16, 16 ],
         flag: [ 32, 16, 16, 16 ],
-        flag_1: [ 32, 32, 16, 16 ],
-        flag_2: [ 32, 48, 16, 16 ],
-        flag_3: [ 32, 64, 16, 16 ],
+        flag_1: [ 32, 48, 16, 16 ],
+        flag_2: [ 32, 64, 16, 16 ],
+        flag_3: [ 32, 80, 16, 16 ],
+        flag_anti: [ 32, 32, 16, 16 ],
+        flag_anti_1: [ 32, 96, 16, 16 ],
+        flag_anti_2: [ 32, 112, 16, 16 ],
+        flag_anti_3: [ 32, 128, 16, 16 ],
         number_0: [ 48, 0, 16, 16 ],
         number_1: [ 48, 16, 16, 16 ],
         number_2: [ 48, 32, 16, 16 ],
@@ -52,6 +57,7 @@ export class ThemeRetro extends Theme {
         number_22: [ 48, 352, 16, 16 ],
         number_23: [ 48, 368, 16, 16 ],
         number_24: [ 48, 384, 16, 16 ],
+        number_negative_sign: [ 96, 96, 16, 16 ],
         tile_vanilla_covered: [ 64, 0, 16, 16 ],
         tile_vanilla_revealed: [ 80, 0, 16, 16 ],
         tile_chocolate_covered: [ 64, 16, 16, 16 ],
@@ -68,6 +74,8 @@ export class ThemeRetro extends Theme {
         tile_blueberry_revealed: [ 80, 64, 16, 16 ],
         tile_strawberry_covered: [ 64, 80, 16, 16 ],
         tile_strawberry_revealed: [ 80, 80, 16, 16 ],
+        tile_cookies_and_cream_covered: [ 64, 96, 16, 16 ],
+        tile_cookies_and_cream_revealed: [ 80, 96, 16, 16 ],
     });
 
     public async init(): Promise<void> {
@@ -81,7 +89,34 @@ export class ThemeRetro extends Theme {
     private drawNearby(ctx: CanvasRenderingContext2D, minesNearby: number | TILE_NONE_NEARBY): void {
         if(minesNearby == TILE_NONE_NEARBY) return;
         if(minesNearby < 0) {
-            // TODO: Draw minus sign then draw positive number.
+            ctx.save();
+
+            ctx.scale(0.55, 0.55);
+            ctx.translate(0.1, 0.45);
+            this.tileset.draw(ctx, 'number_negative_sign', 0, 0, 1, 1);
+            // FIXME CLEANUP: This is just a hack to get the right color on the minus sign.
+            ctx.fillStyle = [
+                '#FFFFFF',
+                '#0026FF',
+                '#267F00',
+                '#BA0000',
+                '#00137F',
+                '#7F0000',
+                '#008080',
+                '#33D137',
+                '#9400D8',
+                '#E48C00',
+                '#FF8F9F',
+                '#FF8F00',
+                '#598CAA',
+                '#F03E69'
+            ][-minesNearby] ?? 'white';
+            ctx.fillRect(0.25 - 0.004, 0.4375 - 0.004, 0.4375 + 0.008, 0.125 + 0.008);
+
+            ctx.translate(0.7, 0);
+            this.drawNearby(ctx, -minesNearby);
+            ctx.restore();
+
             return;
         }
         switch(minesNearby) {
@@ -120,6 +155,9 @@ export class ThemeRetro extends Theme {
             case 1: this.tileset.draw(ctx, 'flag_1', 0, 0, 1, 1); break;
             case 2: this.tileset.draw(ctx, 'flag_2', 0, 0, 1, 1); break;
             case 3: this.tileset.draw(ctx, 'flag_3', 0, 0, 1, 1); break;
+            case -1: this.tileset.draw(ctx, 'flag_anti_1', 0, 0, 1, 1); break;
+            case -2: this.tileset.draw(ctx, 'flag_anti_2', 0, 0, 1, 1); break;
+            case -3: this.tileset.draw(ctx, 'flag_anti_3', 0, 0, 1, 1); break;
             default: throw new Error('ThemeRetro invalid draw flag count.');
         }
     }
@@ -181,6 +219,22 @@ export class ThemeRetro extends Theme {
         }
     }
 
+    private drawSingleAntiMineTile(ctx: CanvasRenderingContext2D, tile: SingleAntiMineTile, covered: keyof typeof this.tileset.textures, revealed: keyof typeof this.tileset.textures, forceCovered: boolean): void {
+        if(forceCovered) {
+            this.tileset.draw(ctx, covered, 0, 0, 1, 1);
+            return;
+        }
+        switch(tile.state) {
+            case SingleAntiMineTileState.Covered: this.tileset.draw(ctx, covered, 0, 0, 1, 1); break;
+            case SingleAntiMineTileState.Flagged: this.tileset.draw(ctx, covered, 0, 0, 1, 1); this.tileset.draw(ctx, 'flag', 0, 0, 1, 1); break;
+            case SingleAntiMineTileState.AntiFlagged: this.tileset.draw(ctx, covered, 0, 0, 1, 1); this.tileset.draw(ctx, 'flag_anti', 0, 0, 1, 1); break;
+            case SingleAntiMineTileState.Revealed: {
+                this.tileset.draw(ctx, revealed, 0, 0, 1, 1);
+                this.drawNearby(ctx, tile.minesNearby());
+                break; }
+        }
+    }
+
     private drawForcedTile(ctx: CanvasRenderingContext2D, tile: ValidTile, forceCovered: boolean): void {
         switch(tile.type) {
             case 'vanilla': this.drawSingleMineTile(ctx, tile, 'tile_vanilla_covered', 'tile_vanilla_revealed', forceCovered); break;
@@ -205,6 +259,9 @@ export class ThemeRetro extends Theme {
             case 'strawberry': {
                 this.drawStrawberryTile(ctx, tile, forceCovered);
                 break; }
+            case 'cookies_and_cream': {
+                this.drawSingleAntiMineTile(ctx, tile, 'tile_cookies_and_cream_covered', 'tile_cookies_and_cream_revealed', forceCovered);
+                break; }
         }
     }
 
@@ -226,7 +283,11 @@ export class ThemeRetro extends Theme {
                 ctx.rotate(particle.r);
                 ctx.globalAlpha = particle.opacity;
                 if(!particle.isMultiFlag) {
-                    this.tileset.draw(ctx, 'flag', -0.5, -0.5, 1, 1);
+                    if(particle.numFlags == 1) {
+                        this.tileset.draw(ctx, 'flag', -0.5, -0.5, 1, 1);
+                    } else {
+                        this.tileset.draw(ctx, 'flag_anti', -0.5, -0.5, 1, 1);
+                    }
                 } else {
                     ctx.translate(-0.5, -0.5);
                     this.drawFlags(ctx, particle.numFlags);

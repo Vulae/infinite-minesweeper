@@ -41,6 +41,35 @@ export function bitsToRepresentValue(value: number): number {
 
 
 
+/**
+ * Iterate over a spiral pattern.
+ * https://stackoverflow.com/questions/398299#answer-33639875
+ * @param offsetX Center X of spiral
+ * @param offsetY Center Y of spiral
+ */
+export function* spiralIter(offsetX: number, offsetY: number): Generator<{ x: number, y: number }> {
+    let x = offsetX;
+    let y = offsetY;
+    let d = 1;
+    let m = 1;
+    while(true) {
+        while(2 * x * d < m) {
+            yield { x, y };
+            x += d;
+        }
+        while(2 * y * d < m) {
+            yield { x, y };
+            y += d;
+        }
+        d = -1 * d;
+        m += 1;
+    }
+}
+
+
+
+
+
 export function createCanvasCtx(width: number, height: number): [ HTMLCanvasElement, CanvasRenderingContext2D ];
 export function createCanvasCtx(img: HTMLImageElement): [ HTMLCanvasElement, CanvasRenderingContext2D ];
 export function createCanvasCtx(canvas: HTMLCanvasElement): [ HTMLCanvasElement, CanvasRenderingContext2D ];

@@ -2,12 +2,13 @@
 import * as bt from "bintype";
 import { CHUNK_SIZE } from "../Constants";
 import type { World } from "../World";
-import type { BlueberryTile } from "./Blueberry";
-import type { ChocolateTile } from "./Chocolate";
-import type { StrawberryTile } from "./Strawberry";
-import type { StroopwafelTile } from "./Stroopwafel";
-import type { VanillaTile } from "./Vanilla";
-import type { WaffleTile } from "./Waffle";
+import type { BlueberryTile } from "./biome/Blueberry";
+import type { ChocolateTile } from "./biome/Chocolate";
+import type { StrawberryTile } from "./biome/Strawberry";
+import type { StroopwafelTile } from "./biome/Stroopwafel";
+import type { VanillaTile } from "./biome/Vanilla";
+import type { WaffleTile } from "./biome/Waffle";
+import type { CookiesAndCreamTile } from "./biome/CookiesAndCream";
 
 
 
@@ -104,8 +105,8 @@ export abstract class Tile {
 
 // TODO: Probably rename above to TileBase and rename below type to just Tile.
 // TODO: Swap name around, eg: VanillaTile -> TileVanilla
-export type ValidTile = VanillaTile | ChocolateTile | WaffleTile | StroopwafelTile | BlueberryTile | StrawberryTile;
+export type ValidTile = VanillaTile | ChocolateTile | WaffleTile | StroopwafelTile | BlueberryTile | StrawberryTile | CookiesAndCreamTile;
 // FIXME: This is dumb, why not `typeof ArrayElement<ValidTile>`
-export type ValidTileConstructor = typeof VanillaTile | typeof ChocolateTile | typeof WaffleTile | typeof StroopwafelTile | typeof BlueberryTile | typeof StrawberryTile;
+export type ValidTileConstructor = typeof VanillaTile | typeof ChocolateTile | typeof WaffleTile | typeof StroopwafelTile | typeof BlueberryTile | typeof StrawberryTile | typeof CookiesAndCreamTile;
 
 

@@ -2,9 +2,9 @@
 import * as bt from "bintype";
 import { hashNormal } from "$lib/RNG";
 import { mapRangeInt } from "$lib/Util";
-import type { World } from "../World";
-import { MultiMineTile } from "./MultiMine";
-import type { ValidTile } from "./Tile";
+import type { World } from "../../World";
+import { MultiMineTile } from "../MultiMine";
+import type { ValidTile } from "../Tile";
 
 
 

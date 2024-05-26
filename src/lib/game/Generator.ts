@@ -1,13 +1,14 @@
 
 import { perlin_noise2d, splitmix32, voronoi_noise2d } from "../RNG";
 import type { World } from "./World";
-import { BlueberryTile } from "./tile/Blueberry";
-import { ChocolateTile } from "./tile/Chocolate";
-import { StrawberryTile } from "./tile/Strawberry";
-import { StroopwafelTile } from "./tile/Stroopwafel";
+import { BlueberryTile } from "./tile/biome/Blueberry";
+import { ChocolateTile } from "./tile/biome/Chocolate";
+import { StrawberryTile } from "./tile/biome/Strawberry";
+import { StroopwafelTile } from "./tile/biome/Stroopwafel";
 import type { ValidTile, ValidTileConstructor } from "./tile/Tile";
-import { VanillaTile } from "./tile/Vanilla";
-import { WaffleTile } from "./tile/Waffle";
+import { VanillaTile } from "./tile/biome/Vanilla";
+import { WaffleTile } from "./tile/biome/Waffle";
+import { CookiesAndCreamTile } from "./tile/biome/CookiesAndCream";
 
 
 
@@ -70,6 +71,10 @@ const Biomes: Biome = {
             weight: 1,
             tile: StrawberryTile
         }]
+    }, {
+        type: 'biome',
+        weight: 2,
+        tile: CookiesAndCreamTile
     }]
 };
 

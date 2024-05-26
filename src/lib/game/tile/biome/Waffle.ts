@@ -1,9 +1,9 @@
 
 import * as bt from "bintype";
-import type { World } from "../World";
-import { SingleMineTile } from "./SingleMine";
+import type { World } from "../../World";
+import { SingleMineTile } from "../SingleMine";
 import { hashNormal } from "$lib/RNG";
-import type { ValidTile } from "./Tile";
+import type { ValidTile } from "../Tile";
 
 
 

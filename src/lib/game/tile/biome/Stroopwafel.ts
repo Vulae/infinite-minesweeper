@@ -1,8 +1,8 @@
 
 import * as bt from "bintype";
-import type { World } from "../World";
-import { SingleMineTile } from "./SingleMine";
-import type { ValidTile } from "./Tile";
+import type { World } from "../../World";
+import { SingleMineTile } from "../SingleMine";
+import type { ValidTile } from "../Tile";
 import { waffle } from "./Waffle";
 
 
