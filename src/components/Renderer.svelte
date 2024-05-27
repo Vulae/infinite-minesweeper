@@ -121,6 +121,10 @@
                 case 'primary': dispatcher('action', { type: 'reveal', pos }); break;
                 case 'secondary': dispatcher('action', { type: 'flag', pos }); break;
                 case 'extra': dispatcher('action', { type: 'reset', pos }); break;
+                // case 'extra': {
+                //     viewport.scale = Math.pow(2, Math.ceil(Math.log(viewport.scale) / Math.log(2)));
+                //     viewport.change();
+                //     break; }
             }
             world.change();
         }}

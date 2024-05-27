@@ -3,7 +3,7 @@
     import LucideChevronLeft from "lucide-svelte/icons/chevron-left";
     import LucideChevronRight from "lucide-svelte/icons/chevron-right";
 
-    const biomeNames = [ 'Vanilla', 'Chocolate', 'Waffle', 'Stroopwafel', 'Blueberry', 'Strawberry' ] as const;
+    const biomeNames = [ 'Vanilla', 'Chocolate', 'Waffle', 'Stroopwafel', 'Blueberry', 'Strawberry', 'Cookies and Cream' ] as const;
     let currentBiome: ArrayElement<typeof biomeNames> = 'Vanilla';
 
     function newBiome(dir: 'next' | 'prev'): void {
@@ -139,6 +139,18 @@
                         Tile nearby mine count may have 2 values.
                         <br /><br />
                         Be careful while revealing tiles; If any of the two values match, the tiles will auto reveal.
+                    </div>
+                </div>
+            </div>
+        {:else if currentBiome == 'Cookies and Cream'}
+            <div class="biome text-black">
+                <img class="biome-backdrop" src="/infinite-minesweeper/biome_cookies_and_cream_screenshot.png" alt="Cookies and Cream Biome Screenshot">
+                <div class="biome-content">
+                    <h2 class="biome-title">Cookies and Cream</h2>
+                    <div class="biome-description">
+                        Tile may have anti mine. Anti mines count as -1 mines.
+                        <br /><br />
+                        Be careful while revealing tiles; Nearby tiles may still have mines, even though nearby mines is equal to nearby flags.
                     </div>
                 </div>
             </div>
