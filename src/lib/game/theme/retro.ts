@@ -204,7 +204,7 @@ export class ThemeRetro extends Theme {
 
                 const nearby1 = tile.minesNearby(true);
                 const nearby2 = tile.secondaryMinesNearby(true);
-                if(nearby2 == null) {
+                if(nearby2 == TILE_NONE_NEARBY) {
                     this.drawNearby(ctx, nearby1);
                 } else {
                     ctx.save();

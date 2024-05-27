@@ -1,6 +1,8 @@
 
 import { hashNormal } from "$lib/RNG";
+import { getTileType } from "$lib/game/Generator";
 import type { World } from "../../World";
+import { SingleAntiMineTile } from "../SingleAntiMine";
 import { SingleMineTile } from "../SingleMine";
 import { TILE_NONE_NEARBY, type ValidTile } from "../Tile";
 import * as bt from "bintype";
@@ -21,14 +23,40 @@ export class StrawberryTile extends SingleMineTile {
         }
     }
 
-    public secondaryMinesNearby(useCache: boolean): number | null {
-        // TODO: What to do with negative number of mines here?
-        if(this.secondaryNearbyCountModifier == null) return null;
+    private secondaryMinesNearbyCache: number | TILE_NONE_NEARBY | null = null;
+    public secondaryMinesNearby(useCache: boolean): number | TILE_NONE_NEARBY {
+        if(this.secondaryMinesNearbyCache !== null && useCache) {
+            return this.secondaryMinesNearbyCache;
+        }
+
+        if(this.secondaryNearbyCountModifier == null) {
+            this.secondaryMinesNearbyCache = TILE_NONE_NEARBY;
+            return TILE_NONE_NEARBY;
+        }
+
         const nearby = this.minesNearby(useCache);
-        if(nearby == TILE_NONE_NEARBY || nearby < 1) return null;
+        if(nearby == TILE_NONE_NEARBY) {
+            this.secondaryMinesNearbyCache = TILE_NONE_NEARBY;
+            return TILE_NONE_NEARBY;
+        }
+
         const nearby2 = nearby + this.secondaryNearbyCountModifier;
-        if(nearby2 <= 0) return null;
-        return nearby2;
+
+        let allow0 = false;
+        for(const offset of this.searchPattern) {
+            const tile = getTileType(this.world, this.x + offset.x, this.y + offset.y);
+            if(tile.prototype instanceof SingleAntiMineTile) {
+                allow0 = true;
+                break;
+            }
+        }
+        if(!allow0 && nearby2 == 0) {
+            this.secondaryMinesNearbyCache = TILE_NONE_NEARBY;
+            return TILE_NONE_NEARBY;
+        }
+
+        this.secondaryMinesNearbyCache = nearby2;
+        return this.secondaryMinesNearbyCache;
     }
 
     public static load(world: World, x: number, y: number, io: bt.BitIO): ValidTile {
