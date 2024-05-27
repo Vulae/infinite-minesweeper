@@ -123,3 +123,43 @@ export function createCanvas2dContext(a?: any, b?: any, c?: any): [ HTMLCanvasEl
 }
 
 
+
+
+
+export function awaitImageLoad(img: HTMLImageElement | string): Promise<HTMLImageElement> {
+    if(typeof img == 'string') {
+        const src = img;
+        img = document.createElement('img');
+        img.src = src;
+    }
+
+    img.loading = 'eager';
+
+    return new Promise((resolve, reject) => {
+        if(img.complete && img.naturalWidth !== 0) {
+            return resolve(img);
+        }
+
+        const onLoad = () => {
+            img.removeEventListener('load', onLoad);
+            img.removeEventListener('error', onError);
+            resolve(img);
+        }
+        const onError = (ev: ErrorEvent) => {
+            img.removeEventListener('load', onLoad);
+            img.removeEventListener('error', onError);
+            reject('Failed to load image.');
+        }
+
+        img.addEventListener('load', onLoad);
+        img.addEventListener('error', onError);
+    });
+}
+
+export async function getImageData(img: HTMLImageElement | string): Promise<ImageData> {
+    img = await awaitImageLoad(img);
+    const [ canvas, ctx ] = createCanvas2dContext(img);
+    return ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+

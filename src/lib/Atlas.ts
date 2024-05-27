@@ -1,4 +1,5 @@
-import { createCanvas2dContext } from "./Util";
+
+import { awaitImageLoad, createCanvas2dContext } from "./Util";
 
 
 
@@ -22,29 +23,10 @@ export class TextureAtlas<Textures extends {
         this.textures = textures;
     }
 
-    public awaitLoad(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if(this.img instanceof HTMLCanvasElement) {
-                return resolve();
-            }
-            if(this.img.complete && this.img.naturalWidth !== 0) {
-                return resolve();
-            }
-
-            const onLoad = () => {
-                this.img.removeEventListener('load', onLoad);
-                this.img.removeEventListener('error', onError);
-                resolve();
-            }
-            const onError = () => {
-                this.img.removeEventListener('load', onLoad);
-                this.img.removeEventListener('error', onError);
-                reject();
-            }
-
-            this.img.addEventListener('load', onLoad);
-            this.img.addEventListener('error', onError);
-        });
+    public async awaitLoad(): Promise<void> {
+        if(!(this.img instanceof HTMLCanvasElement)) {
+            await awaitImageLoad(this.img);
+        }
     }
 
     public onLoad(callbackfn: (atlas: TextureAtlas<Textures>) => void): void {
