@@ -3,7 +3,7 @@ import { TextureAtlas } from "../../Atlas";
 import type { ValidParticle } from "../particle/Particle";
 import type { MultiMineTile } from "../tile/MultiMine";
 import { SingleMineTileState, type SingleMineTile } from "../tile/SingleMine";
-import type { StrawberryTile } from "../tile/biome/Strawberry";
+import { StrawberryTileSecondaryMines, type StrawberryTile } from "../tile/biome/Strawberry";
 import { TILE_NONE_NEARBY, type ValidTile } from "../tile/Tile";
 import { Theme, type SoundEffect } from "./Theme";
 import { SingleAntiMineTileState, type SingleAntiMineTile } from "../tile/SingleAntiMine";
@@ -204,15 +204,15 @@ export class ThemeRetro extends Theme {
 
                 const nearby1 = tile.minesNearby(true);
                 const nearby2 = tile.secondaryMinesNearby(true);
-                if(nearby2 == TILE_NONE_NEARBY) {
+                if(nearby2 == null) {
                     this.drawNearby(ctx, nearby1);
                 } else {
                     ctx.save();
                     ctx.scale(0.55, 0.55);
                     ctx.translate(0.1, 0.45);
-                    this.drawNearby(ctx, tile.secondaryNearbyCountRightSide ? nearby1 : nearby2);
+                    this.drawNearby(ctx, tile.secondaryNearbyMines == StrawberryTileSecondaryMines.Right ? nearby1 : nearby2);
                     ctx.translate(0.7, 0);
-                    this.drawNearby(ctx, tile.secondaryNearbyCountRightSide ? nearby2 : nearby1);
+                    this.drawNearby(ctx, tile.secondaryNearbyMines == StrawberryTileSecondaryMines.Right ? nearby2 : nearby1);
                     ctx.restore();
                 }
                 break; }

@@ -9,54 +9,72 @@ import * as bt from "bintype";
 
 
 
+export enum StrawberryTileSecondaryMines {
+    None,
+    Left,
+    Right
+}
+
+
+
 export class StrawberryTile extends SingleMineTile {
     public readonly type: 'strawberry' = 'strawberry';
-    public readonly secondaryNearbyCountModifier: number | null = null;
-    public readonly secondaryNearbyCountRightSide: boolean = false;
+
+    public readonly secondaryNearbyMines: StrawberryTileSecondaryMines;
+    public readonly secondaryNearbyMinesModifier: number;
 
     public constructor(world: World, x: number, y: number) {
         const isMine = hashNormal(world.tileSeed, x, y, 0) > 0.825;
         super(world, x, y, isMine);
-        if(hashNormal(world.tileSeed, x, y, 1) > 0.3) {
-            this.secondaryNearbyCountModifier = hashNormal(world.tileSeed, x, y, 2) > 0.3 ? 1 : -1;
-            this.secondaryNearbyCountRightSide = hashNormal(world.tileSeed, x, y, 3) > 0.5;
-        }
+
+        this.secondaryNearbyMines = hashNormal(world.tileSeed, x, y, 1) > 0.3 ? (
+                hashNormal(world.tileSeed, x, y, 2) > 0.5 ?
+                StrawberryTileSecondaryMines.Left :
+                StrawberryTileSecondaryMines.Right
+            ) : StrawberryTileSecondaryMines.None;
+        this.secondaryNearbyMinesModifier = hashNormal(world.tileSeed, x, y, 3) > 0.3 ? 1 : -1;
     }
 
-    private secondaryMinesNearbyCache: number | TILE_NONE_NEARBY | null = null;
-    public secondaryMinesNearby(useCache: boolean): number | TILE_NONE_NEARBY {
-        if(this.secondaryMinesNearbyCache !== null && useCache) {
-            return this.secondaryMinesNearbyCache;
+    private secondaryNearbyMiensCacheSet: boolean = false;
+    private secondaryNearbyMinesCache: number | TILE_NONE_NEARBY | null = null;
+    public secondaryMinesNearby(useCache: boolean): number | TILE_NONE_NEARBY | null {
+        if(this.secondaryNearbyMiensCacheSet) {
+            return this.secondaryNearbyMinesCache;
         }
 
-        if(this.secondaryNearbyCountModifier == null) {
-            this.secondaryMinesNearbyCache = TILE_NONE_NEARBY;
-            return TILE_NONE_NEARBY;
+        if(this.secondaryNearbyMines == StrawberryTileSecondaryMines.None) {
+            this.secondaryNearbyMiensCacheSet = true;
+            this.secondaryNearbyMinesCache = null;
+            return this.secondaryNearbyMinesCache;
         }
 
         const nearby = this.minesNearby(useCache);
         if(nearby == TILE_NONE_NEARBY) {
-            this.secondaryMinesNearbyCache = TILE_NONE_NEARBY;
-            return TILE_NONE_NEARBY;
+            this.secondaryNearbyMiensCacheSet = true;
+            this.secondaryNearbyMinesCache = TILE_NONE_NEARBY;
+            return this.secondaryNearbyMinesCache;
         }
 
-        const nearby2 = nearby + this.secondaryNearbyCountModifier;
+        const secondaryNearby = nearby + this.secondaryNearbyMinesModifier;
 
-        let allow0 = false;
+        let secondaryNearbyMinesAllowAnti: boolean = false;
         for(const offset of this.searchPattern) {
             const tile = getTileType(this.world, this.x + offset.x, this.y + offset.y);
             if(tile.prototype instanceof SingleAntiMineTile) {
-                allow0 = true;
+                secondaryNearbyMinesAllowAnti = true;
                 break;
             }
         }
-        if(!allow0 && nearby2 == 0) {
-            this.secondaryMinesNearbyCache = TILE_NONE_NEARBY;
-            return TILE_NONE_NEARBY;
-        }
 
-        this.secondaryMinesNearbyCache = nearby2;
-        return this.secondaryMinesNearbyCache;
+        if(!secondaryNearbyMinesAllowAnti && secondaryNearby <= 0) {
+            this.secondaryNearbyMiensCacheSet = true;
+            this.secondaryNearbyMinesCache = null;
+            return this.secondaryNearbyMinesCache;
+        } else {
+            this.secondaryNearbyMiensCacheSet = true;
+            this.secondaryNearbyMinesCache = secondaryNearby;
+            return this.secondaryNearbyMinesCache;
+        }
     }
 
     public static load(world: World, x: number, y: number, io: bt.BitIO): ValidTile {

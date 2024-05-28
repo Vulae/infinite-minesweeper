@@ -8,6 +8,7 @@ import { EventDispatcher } from "$lib/EventDispatcher";
 import { F_WORLD } from "./Save";
 import * as bt from "bintype";
 import { spiralIter } from "$lib/Util";
+import { StrawberryTileSecondaryMines } from "./tile/biome/Strawberry";
 
 
 
@@ -109,12 +110,13 @@ export class World extends EventDispatcher<{
             }
         }
 
+        // TODO: Change these to sets.
         let reveal: ValidTile[] = [ ];
         let stack: ValidTile[] = [ ];
         // If either of strawberry nearby mine values is right.
-        if(tile.type == 'strawberry') {
+        if(tile.type == 'strawberry' && tile.secondaryNearbyMines != StrawberryTileSecondaryMines.None) {
             const nearbySecondary = tile.secondaryMinesNearby(false);
-            if(nearbySecondary != null && nearbySecondary == tile.flagsNearby()) {
+            if(nearbySecondary !== null && nearbySecondary == tile.flagsNearby()) {
                 stack.push(tile);
             }
         }
