@@ -47,9 +47,7 @@
         on:move={ev => dispatcher('move', ev.detail)}
         on:zoom={ev => dispatcher('zoom', ev.detail)}
         on:input={ev => dispatcher('input', ev.detail)}
-    >
-        <slot />
-    </MouseController>
+    />
 {:else if inputMethod == 'keyboard'}
     <span>Keyboard input method not implemented.</span>
 {:else if inputMethod == 'touch'}
@@ -58,9 +56,7 @@
         on:move={ev => dispatcher('move', ev.detail)}
         on:zoom={ev => dispatcher('zoom', ev.detail)}
         on:input={ev => dispatcher('input', ev.detail)}
-    >
-        <slot />
-    </TouchController>
+    />
 {:else}
     <span>Unsupported input method.</span>
 {/if}

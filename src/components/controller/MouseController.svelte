@@ -93,6 +93,4 @@
         });
     }}
     on:contextmenu|preventDefault
->
-    <slot />
-</div>
+/>

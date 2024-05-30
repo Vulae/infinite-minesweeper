@@ -77,6 +77,4 @@
 <div
     bind:this={container}
     class={_class}
->
-    <slot />
-</div>
+/>

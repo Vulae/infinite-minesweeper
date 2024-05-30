@@ -9,7 +9,6 @@
     import Controller from "./controller/Controller.svelte";
     import type { EventListener } from "$lib/EventDispatcher";
     import { inputMethod } from "../store";
-    import type { Unsubscriber } from "svelte/store";
     const dispatcher = createEventDispatcher();
 
     let container: HTMLDivElement;
@@ -58,7 +57,6 @@
 
     let worldListener: EventListener;
     let viewportListener: EventListener;
-    let inputMethodListener: Unsubscriber;
 
     onMount(async () => {
         await initWorldRenderer();
@@ -70,13 +68,6 @@
         viewportListener = viewport.addEventListener('change', () => {
             worldNeedsRerender = true;
         });
-        inputMethodListener = inputMethod.subscribe(() => {
-            // ??? Why need to wait here?
-            setTimeout(async () => {
-                await initWorldRenderer();
-                await initParticleRenderer();
-            }, 100);
-        });
     });
 
     onDestroy(() => {
@@ -84,7 +75,6 @@
         particleRenderer?.destroy();
         world.removeEventListener(worldListener);
         viewport.removeEventListener(viewportListener);
-        inputMethodListener();
         cancelAnimationFrame(animFrame);
     });
 
@@ -92,7 +82,7 @@
 
 <div
     bind:this={container}
-    class="w-full h-full cursor-pointer"
+    class="w-full h-full cursor-pointer force-overlap"
     use:resize={(width, height) => {
         worldCanvas.width = width;
         worldCanvas.height = height;
@@ -102,6 +92,8 @@
         render();
     }}
 >
+    <canvas bind:this={worldCanvas} />
+    <canvas bind:this={particleCanvas} />
     <Controller
         class="w-full h-full force-overlap"
         inputMethod={$inputMethod}
@@ -128,8 +120,5 @@
             }
             world.change();
         }}
-    >
-        <canvas bind:this={worldCanvas} />
-        <canvas bind:this={particleCanvas} />
-    </Controller>
+    />
 </div>
