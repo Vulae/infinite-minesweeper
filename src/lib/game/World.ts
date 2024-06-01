@@ -16,6 +16,7 @@ export type ChunkCoordinate = `${number},${number}`;
 
 export class World extends EventDispatcher<{
     'change': null;
+    'tile_update': ValidTile;
     'sound_reveal': number;
     'sound_unflag': null;
     'sound_explosion': null;
@@ -92,6 +93,8 @@ export class World extends EventDispatcher<{
             this.dispatchEvent('particle_unflag', { x, y });
             this.dispatchEvent('sound_unflag', null);
         }
+        // FIXME: This should not always execute.
+        this.dispatchEvent('tile_update', tile);
     }
 
     private _revealCount: number = 0;
@@ -104,9 +107,11 @@ export class World extends EventDispatcher<{
                 this._died = true;
                 this.dispatchEvent('particle_explosion', { x: tile.x, y: tile.y });
                 this.dispatchEvent('die', { x: tile.x, y: tile.y });
+                this.dispatchEvent('tile_update', tile);
                 return;
             } else {
                 this.dispatchEvent('particle_reveal', { x: tile.x, y: tile.y });
+                this.dispatchEvent('tile_update', tile);
             }
         }
 
@@ -149,8 +154,10 @@ export class World extends EventDispatcher<{
                     this._died = true;
                     this.dispatchEvent('particle_explosion', { x: r.x, y: r.y });
                     this.dispatchEvent('die', { x: r.x, y: r.y });
+                    this.dispatchEvent('tile_update', r);
                 } else {
                     this.dispatchEvent('particle_reveal', { x: r.x, y: r.y });
+                    this.dispatchEvent('tile_update', r);
                 }
             }
         }
@@ -176,6 +183,7 @@ export class World extends EventDispatcher<{
         const chunk = this.getChunk(Math.floor(x / CHUNK_SIZE), Math.floor(y / CHUNK_SIZE));
         if(!chunk.isGenerated()) return;
         chunk.resetTileAbsolute(x, y);
+        this.dispatchEvent('tile_update', this.getTile(x, y));
     }
 
 

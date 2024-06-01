@@ -38,6 +38,18 @@ export class TextureAtlas<Textures extends {
         ctx.drawImage(this.img, sx, sy, sw, sh, x, y, width, height);
     }
 
+    public uvs(texture: keyof Textures): { uMin: number, uMax: number, vMin: number, vMax: number } {
+        const width = this.img.width;
+        const height = this.img.height;
+        const [ sx, sy, sw, sh ] = this.textures[texture];
+        return {
+            uMin: sx / width,
+            uMax: (sx + sw) / width,
+            vMin: sy / height,
+            vMax: (sy + sh) / height
+        }
+    }
+
 
 
     public toImageDataAtlas(): TextureAtlasImageData<{

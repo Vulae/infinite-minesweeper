@@ -111,6 +111,13 @@ export class Viewport extends EventDispatcher<{
         );
     }
 
+    public intersects(x: number, y: number, width: number, height: number, canvas: HTMLCanvasElement, round: boolean, margin: number = 0): boolean {
+        const bounds = this.bounds(canvas, round, margin);
+        if(bounds.maxX < x || x + width < bounds.minX) return false;
+        if(bounds.maxY < y || y + height < bounds.minY) return false;
+        return true;
+    }
+
     public canvasPos(canvas: HTMLCanvasElement, x: number, y: number, floor: boolean): { x: number, y: number } {
         const cX = (x - canvas.width / 2) / this.scale + this.x;
         const cY = (y - canvas.height / 2) / this.scale + this.y;
