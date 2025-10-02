@@ -3,7 +3,7 @@ import { TileBiomeStrawberry } from './biomes/strawberry';
 import type { Game } from './game';
 import type { Tile } from './tile';
 import { Viewport } from './viewport';
-import type { World } from './world';
+import { NEARBY_NONE, type World } from './world';
 
 class OutlineRenderer {
     private readonly canvas: CanvasStore = new CanvasStore();
@@ -196,11 +196,9 @@ export class Renderer {
     }
 
     public renderNearbyNumberTile(ctx: CanvasRenderingContext2D, tile: Tile) {
-        if (this.world.hasNearbyMine(tile.x, tile.y, tile.mineSearchPattern())) {
-            this.renderNearbyNumber(
-                ctx,
-                this.world.getMinesCount(tile.x, tile.y, tile.mineSearchPattern())
-            );
+        const nearby = tile.getNearbyMines(this.world);
+        if (nearby != NEARBY_NONE) {
+            this.renderNearbyNumber(ctx, nearby as number);
         }
     }
 }

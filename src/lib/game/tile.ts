@@ -1,4 +1,26 @@
 import type { Renderer } from './renderer';
+import { NEARBY_NONE, type World } from './world';
+
+function nearbyCounter(
+    world: World,
+    tile: Tile,
+    counter: (neighbor: Tile) => number
+): number | typeof NEARBY_NONE {
+    let nearbyCount = 0;
+    let hasNearby: boolean = false;
+    for (const neighbor of world.iterPattern(tile.x, tile.y, tile.mineSearchPattern())) {
+        const count = counter(neighbor);
+        if (count != 0) {
+            hasNearby = true;
+        }
+        nearbyCount += count;
+    }
+    if (hasNearby) {
+        return nearbyCount;
+    } else {
+        return NEARBY_NONE;
+    }
+}
 
 export abstract class Tile {
     public readonly x: number;
@@ -9,9 +31,22 @@ export abstract class Tile {
         this.y = y;
     }
 
+    private getNearbyMinesCache: number | typeof NEARBY_NONE | null = null;
+    public getNearbyMines(world: World): number | typeof NEARBY_NONE {
+        if (this.getNearbyMinesCache === null) {
+            this.getNearbyMinesCache = nearbyCounter(world, this, (neighbor) =>
+                neighbor.numMines()
+            );
+        }
+        return this.getNearbyMinesCache;
+    }
+
+    public getNearbyFlags(world: World): number | typeof NEARBY_NONE {
+        return nearbyCounter(world, this, (neighbor) => neighbor.numFlags());
+    }
+
     public abstract mineSearchPattern(): [number, number][];
     public abstract numMines(): number;
-
     public abstract isRevealed(): boolean;
     public abstract numFlags(): number;
 

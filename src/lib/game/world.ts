@@ -2,6 +2,8 @@ import { spiralIter } from '$lib/util';
 import { generateTile } from './generator';
 import type { Tile } from './tile';
 
+export const NEARBY_NONE: symbol = Symbol('NEARBY_NONE');
+
 const CHUNK_SIZE: number = 32;
 
 class Chunk {
@@ -85,29 +87,6 @@ export class World {
         }
     }
 
-    public getMinesCount(x: number, y: number, pattern: [number, number][]): number {
-        let count = 0;
-        for (const tile of this.iterPattern(x, y, pattern)) {
-            count += tile.numMines();
-        }
-        return count;
-    }
-
-    public hasNearbyMine(x: number, y: number, pattern: [number, number][]): boolean {
-        for (const tile of this.iterPattern(x, y, pattern)) {
-            if (tile.numMines() != 0) return true;
-        }
-        return false;
-    }
-
-    public getFlagsCount(x: number, y: number, pattern: [number, number][]): number {
-        let count = 0;
-        for (const tile of this.iterPattern(x, y, pattern)) {
-            count += tile.numFlags();
-        }
-        return count;
-    }
-
     public revealTile(x: number, y: number): void {
         if (this.isTileLocked(x, y)) {
             return;
@@ -122,10 +101,7 @@ export class World {
         const reveal: Tile[] = [];
         const search: Tile[] = [];
 
-        if (
-            this.getMinesCount(tile.x, tile.y, tile.mineSearchPattern()) ==
-            this.getFlagsCount(tile.x, tile.y, tile.mineSearchPattern())
-        ) {
+        if (tile.getNearbyMines(this) == tile.getNearbyFlags(this)) {
             search.push(tile);
         }
 
@@ -136,7 +112,7 @@ export class World {
             for (const next of this.iterPattern(tile.x, tile.y, tile.mineSearchPattern())) {
                 if (reveal.some((t) => t.x == next.x && t.y == next.y)) continue;
                 if (search.some((t) => t.x == next.x && t.y == next.y)) continue;
-                if (!this.hasNearbyMine(next.x, next.y, next.mineSearchPattern())) {
+                if (next.getNearbyMines(this) == NEARBY_NONE) {
                     search.push(next);
                 } else {
                     reveal.push(next);
@@ -164,10 +140,7 @@ export class World {
         // Auto-reveal nearest tile to (0, 0) that has 0 nearby mines.
         for (const { x, y } of spiralIter(0, 0)) {
             const tile = this.getTile(x, y);
-            if (
-                tile.numMines() == 0 &&
-                this.getMinesCount(tile.x, tile.y, tile.mineSearchPattern()) == 0
-            ) {
+            if (tile.numMines() == 0 && tile.getNearbyMines(this) == NEARBY_NONE) {
                 this.revealTile(x, y);
                 break;
             }
