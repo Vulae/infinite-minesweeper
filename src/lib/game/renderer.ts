@@ -13,7 +13,8 @@ class OutlineRenderer {
         num_tiles: number,
         pos: [number, number][],
         color: string = 'white',
-        outline_width: number = 1
+        outline_width: number = 1,
+        overlay_color: string | null = null
     ): HTMLCanvasElement {
         const canvas = this.canvas.canvas;
         const ctx = this.canvas.ctx;
@@ -40,6 +41,13 @@ class OutlineRenderer {
         // Clear boxes at actual size
         for (const [x, y] of pos) {
             ctx.clearRect(x * tile_size, y * tile_size, tile_size, tile_size);
+        }
+        // Extra overlay color
+        if (overlay_color !== null) {
+            ctx.fillStyle = overlay_color;
+            for (const [x, y] of pos) {
+                ctx.fillRect(x * tile_size, y * tile_size, tile_size, tile_size);
+            }
         }
 
         return canvas;
@@ -167,9 +175,9 @@ export class Renderer {
                     [[0, 0], ...hoverTile.mineSearchPattern()],
                     // `oklch(0.72 0.17 ${(Date.now() / 10) % 360})`,
                     'black',
-                    outlineWidth
+                    outlineWidth,
+                    'rgba(0, 0, 0, 0.2)'
                 );
-                // this.ctx.globalCompositeOperation = 'overlay';
                 const p = (1 / 16) * outlineWidth;
                 this.ctx.drawImage(outline, -2 - p, -2 - p, 5 + p * 2, 5 + p * 2);
 

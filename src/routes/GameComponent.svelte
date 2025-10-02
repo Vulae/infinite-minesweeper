@@ -16,6 +16,7 @@
     let renderer = new Renderer(game);
 
     let animationFrame: number = -1;
+    let needsRerender: boolean = false;
 
     $effect(() => {
         renderer.setCanvas(canvas);
@@ -31,9 +32,13 @@
         if (canvas.width !== newWidth || canvas.height !== newHeight) {
             canvas.width = newWidth;
             canvas.height = newHeight;
+            needsRerender = true;
         }
         if (tilesetLoaded) {
-            renderer.render();
+            if (needsRerender) {
+                needsRerender = false;
+                renderer.render();
+            }
         }
         animationFrame = requestAnimationFrame(() => render());
     }
@@ -55,6 +60,7 @@
         class="h-full w-full"
         oncontrollermove={(_x, _y, dx, dy) => {
             renderer.viewport.translate(canvas, dx, dy);
+            needsRerender = true;
         }}
         oncontrollerzoom={(x, y, type, value) => {
             if (type === 'relative') {
@@ -65,6 +71,7 @@
                 const clampedScale = renderer.viewport.clampScale(canvas, value, 4, 48);
                 renderer.viewport.scaleFrom(canvas, clampedScale, x, y);
             }
+            needsRerender = true;
         }}
         oncontrollerinput={(x, y, button) => {
             const worldPos = renderer.viewport.canvasPos(canvas, x, y, true);
@@ -76,13 +83,28 @@
                     game.world.flagTile(worldPos.x, worldPos.y);
                     break;
             }
+            needsRerender = true;
         }}
         oncontrollerhover={(pos) => {
+            let lastHoverTileX: number | null = null;
+            let lastHoverTileY: number | null = null;
+            if (renderer.hoverTile != null) {
+                lastHoverTileX = renderer.hoverTile.x;
+                lastHoverTileY = renderer.hoverTile.y;
+            }
+
             if (!pos) {
                 renderer.hoverTile = null;
             } else {
                 const worldPos = renderer.viewport.canvasPos(canvas, pos.x, pos.y, true);
                 renderer.hoverTile = worldPos;
+            }
+
+            if (
+                (renderer.hoverTile ?? { x: null }).x !== lastHoverTileX ||
+                (renderer.hoverTile ?? { y: null }).y !== lastHoverTileY
+            ) {
+                needsRerender = true;
             }
         }}
     >
