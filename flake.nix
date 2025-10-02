@@ -10,6 +10,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
+        # https://github.com/sass/embedded-host-node/issues/334
         nixpatchbins = pkgs.writers.writeBashBin "nixpatchbins" ''
           set -o errexit || exit; set -o nounset; set -o pipefail
 

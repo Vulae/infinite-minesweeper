@@ -1,0 +1,15 @@
+import type { Renderer } from '../renderer';
+import { TileBasicSingularMine } from '../tile';
+
+export class TileBiomeChocolate extends TileBasicSingularMine {
+    public constructor(x: number, y: number, isMine: boolean) {
+        super(x, y, isMine);
+    }
+
+    public getTileKey(
+        _renderer: Renderer,
+        covered: boolean
+    ): keyof Renderer['TILESET']['textures'] {
+        return covered ? 'tile_chocolate_covered' : 'tile_chocolate_uncovered';
+    }
+}

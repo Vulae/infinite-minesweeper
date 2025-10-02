@@ -1,58 +1,16 @@
 
-* [X] Clean up /src/lib directory
+[ ] - Favicon
+[ ] - Menu for controls, settings, & information
 
-* [ ] Actual README.md
+[ ] - Better world generation (It uggo rn)
 
-* [X] Particles
-    * [ ] Option to disable particle layer
-* [ ] Better sound effects
-    * [X] Option to change volume of sound effects
-* [ ] Favicon
-* [ ] Theme picker
-    * [ ] Modern theme (Flat style graphics)
-    * [ ] SeaBear1015 theme (https://github.com/Vulae/infinite-minesweeper/issues/4)
-* [ ] Retro theme: Replace number placeholders
-* [X] Skull displayed on tiles that player died on
-
-* [ ] Extreme zoom out
-    * (Zoom out very far, stop rendering individual tiles and just render biome colors)
-* [X] Click on revealed tile to auto-reveal neighbors
-
-* Control methods
-    * [X] Mouse control method
-        * [ ] Remove middle click for moving, just use left click instead.
-    * [ ] Full keyboard control method
-    * [X] Mobile control method
-        * [ ] Zooming in & out
-        * [ ] Tap & double tap speed to be adjustable
-
-* [X] Add save/load system
-    * [ ] Convert save/load system to use IndexDB instead of LocalStorage
-    * [X] Add save version number that resets world when versions clash
-    * [ ] Don't save unmodified chunks
-
-* [ ] Chunk information (Optional to display these)
-    * [ ] First interaction date
-    * [ ] Completion date
-    * [ ] Number of losses
-
-* [ ] Biome information
-    * (Display the same info in the biome info modal)
-
-* [X] Bookmarks
-    * (Save positions in the world to teleport back to at any time)
-
-* [X] Biomes
-    * [X] Vanilla (Normal minesweeper)
-    * [X] Chocolate (Vanilla with extra mines)
-    * [X] Blueberry (Minesweeper, up to 3 mines on a tile)
-    * [ ] Blueberry Chocolate (Blueberry with extra mines)
-    * [X] Waffle (2x2 checkers of tiles, dark sections have 3 mines, light sections have 1 mine)
-    * [X] Stroopwafel (3x3 checkers of tiles, dark sections have 8 mines, light sections have 1 mine)
-    * [X] Strawberry (Tile may have a 2 numbers for bombs in range)
-    * [ ] Strawberry Chocolate (Strawberry with extra mines)
-* [ ] Better biome generation (Don't allow for tiny biomes.)
-
-* [ ] Items
-    * [ ] Reveal (Reveal 3x3 area and flag bombs)
-    * [ ] Locate (Reveal nearest 0 tile that is covered)
+[X] - Vanilla
+    [X] - Chocolate: Vanilla with extra mines
+[X] - Blueberry: Tiles may have up to 3 mines
+[X] - Strawberry: Each tile has some tiles in a 5x5 area where it can pull what mines count towards its counter
+[ ] - Pistachio: Some tiles may have 2 values, with 1 being correct & 1 being incorrect
+[ ] - Waffle: 2x2 checkerboard areas, with alternating between 1 mine and 3 mines in the 2x2 areas
+    [ ] - Stroopwafel: 3x3 checkerboard areas, with alternating between 1 mine and 9 mines in the 3x3 areas 
+[ ] - Cookies & cream: There are also negative mines that add -1 to the tile counter
+    [ ] - Mint cookies & cream: Imaginary number mines?? (Maybe not IDK how this would work.)
+[ ] - Cotton candy: 2 colors of tiles (light blue and pink), with blue tiles counting mines vertically & pink tiles counting mines horizontally.
