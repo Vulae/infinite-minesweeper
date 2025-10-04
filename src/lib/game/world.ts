@@ -110,6 +110,7 @@ export class World {
             reveal.push(tile);
 
             for (const next of this.iterPattern(tile.x, tile.y, tile.mineSearchPattern())) {
+                if (next.numFlags() != 0) continue;
                 if (reveal.some((t) => t.x == next.x && t.y == next.y)) continue;
                 if (search.some((t) => t.x == next.x && t.y == next.y)) continue;
                 if (next.getNearbyMines(this) == NEARBY_NONE) {
@@ -121,7 +122,6 @@ export class World {
         }
 
         for (const tile of reveal) {
-            if (tile.numFlags() != 0) continue;
             if (!tile.reveal()) {
                 this.lockTile(tile.x, tile.y);
             }
