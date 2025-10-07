@@ -21,17 +21,21 @@ const WorldTileGenerators: TileGenerators = {
         return new TileBiomeChocolate(x, y, random.bool(0.25));
     },
     strawberry: function (x, y, random) {
-        const pattern: [number, number][] = [];
-        for (let dx = -2; dx <= 2; dx++) {
-            for (let dy = -2; dy <= 2; dy++) {
-                if (dx === 0 && dy === 0) continue;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (random.float() < 1 - dist / 3) {
-                    pattern.push([dx, dy]);
+        if (random.float() < 0.25) {
+            return new TileBiomeStrawberry(x, y, true, []);
+        } else {
+            const pattern: [number, number][] = [];
+            for (let dx = -2; dx <= 2; dx++) {
+                for (let dy = -2; dy <= 2; dy++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (random.float() < 1 - dist / 3) {
+                        pattern.push([dx, dy]);
+                    }
                 }
             }
+            return new TileBiomeStrawberry(x, y, false, pattern);
         }
-        return new TileBiomeStrawberry(x, y, random.float() < 0.25, pattern);
     },
     blueberry: function (x, y, random) {
         return new TileBiomeBlueberry(
