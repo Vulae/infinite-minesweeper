@@ -56,6 +56,10 @@ export abstract class Tile {
 
     /** Context is transformed so tile is at 0 0 with size 1 1 */
     public abstract render(ctx: CanvasRenderingContext2D, renderer: Renderer): void;
+    /** Returns a color of this tile for lowres rendering mode */
+    public color(): number {
+        return (this.x + this.y) % 2 == 0 ? 0x000000 : 0xff00ff;
+    }
 }
 
 export const BASIC_PATTERN: [number, number][] = [

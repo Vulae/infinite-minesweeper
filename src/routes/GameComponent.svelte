@@ -65,15 +65,16 @@
         oncontrollerzoom={(x, y, type, value) => {
             if (type === 'relative') {
                 const newScale = renderer.viewport.scale * value;
-                const clampedScale = renderer.viewport.clampScale(canvas, newScale, 4, 48);
+                const clampedScale = renderer.viewport.clampScale(canvas, newScale, 4, 256);
                 renderer.viewport.scaleFrom(canvas, clampedScale, x, y);
             } else {
-                const clampedScale = renderer.viewport.clampScale(canvas, value, 4, 48);
+                const clampedScale = renderer.viewport.clampScale(canvas, value, 4, 256);
                 renderer.viewport.scaleFrom(canvas, clampedScale, x, y);
             }
             needsRerender = true;
         }}
         oncontrollerinput={(x, y, button) => {
+            if (renderer.isLowres()) return;
             const worldPos = renderer.viewport.canvasPos(canvas, x, y, true);
             switch (button) {
                 case 'primary':

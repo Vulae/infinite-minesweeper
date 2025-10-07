@@ -22,12 +22,12 @@ export class TileBiomeBlueberry extends Tile {
         return this._numMines;
     }
 
-    public isRevealed(): boolean {
-        return this._isRevealed;
-    }
-
     public numFlags(): number {
         return this._numFlags;
+    }
+
+    public isRevealed(): boolean {
+        return this._isRevealed;
     }
 
     public flag(): void {
@@ -63,5 +63,9 @@ export class TileBiomeBlueberry extends Tile {
             renderer.TILESET.drawTexture(ctx, 'tile_blueberry_uncovered');
             renderer.renderNearbyNumberTile(ctx, this);
         }
+    }
+
+    public color(): number {
+        return 0x2453a5;
     }
 }

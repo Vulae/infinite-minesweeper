@@ -1,5 +1,7 @@
+import { EventDispatcher } from '$lib/eventDispatcher';
 import { spiralIter } from '$lib/util';
-import { generateTile } from './generator';
+import { TileBiomeCookiesAndCream } from './biomes/cookiesAndCream';
+import { WorldGenerator } from './generator';
 import type { Tile } from './tile';
 
 export const NEARBY_NONE: symbol = Symbol('NEARBY_NONE');
@@ -23,13 +25,13 @@ class Chunk {
         return this.locks[y * CHUNK_SIZE + x];
     }
 
-    public static generate(seed: number, chunkX: number, chunkY: number): Chunk {
+    public static generate(chunkX: number, chunkY: number, generator: WorldGenerator): Chunk {
         const chunk = new Chunk();
-        for (let y = 0; y < CHUNK_SIZE; y++) {
-            for (let x = 0; x < CHUNK_SIZE; x++) {
-                const globalX = chunkX * CHUNK_SIZE + x;
-                const globalY = chunkY * CHUNK_SIZE + y;
-                chunk.tiles[y * CHUNK_SIZE + x] = generateTile(seed, globalX, globalY);
+        for (let dy = 0; dy < CHUNK_SIZE; dy++) {
+            for (let dx = 0; dx < CHUNK_SIZE; dx++) {
+                const x = chunkX * CHUNK_SIZE + dx;
+                const y = chunkY * CHUNK_SIZE + dy;
+                chunk.tiles[dy * CHUNK_SIZE + dx] = generator.generateTile(x, y);
             }
         }
         console.log('Generated chunk', chunkX, chunkY, chunk);
@@ -39,8 +41,13 @@ class Chunk {
 
 type ChunkPos = `${number},${number}`;
 
-export class World {
-    public readonly seed: number = Math.floor(Math.random() * 4294967296);
+export class World extends EventDispatcher<{
+    change: { x: number; y: number };
+    death: { x: number; y: number };
+}> {
+    public readonly generator: WorldGenerator = new WorldGenerator(
+        Math.floor(Math.random() * 4294967296)
+    );
 
     private readonly chunks: Map<ChunkPos, Chunk> = new Map();
 
@@ -48,7 +55,7 @@ export class World {
         const key: ChunkPos = `${chunkX},${chunkY}`;
         let chunk = this.chunks.get(key);
         if (!chunk) {
-            chunk = Chunk.generate(this.seed, chunkX, chunkY);
+            chunk = Chunk.generate(chunkX, chunkY, this.generator);
             this.chunks.set(key, chunk);
         }
         return chunk;
@@ -93,8 +100,11 @@ export class World {
         }
         const tile = this.getTile(x, y);
         if (tile.numFlags() != 0) return;
+
+        this.dispatchEvent('change', { x, y });
         if (!tile.reveal()) {
             this.lockTile(x, y);
+            this.dispatchEvent('death', { x, y });
             return;
         }
 
@@ -105,8 +115,22 @@ export class World {
             search.push(tile);
         }
 
-        while (search.length > 0) {
+        outer: while (search.length > 0) {
             const tile = search.pop()!;
+
+            // Do not auto reveal if there can be a positive mine & negative mine.
+            // FIXME: This doesn't work wtffff
+            if (tile instanceof TileBiomeCookiesAndCream) {
+                let numCovered = 0;
+                for (const neighbor of this.iterPattern(tile.x, tile.y, tile.mineSearchPattern())) {
+                    if (neighbor.getNearbyFlags(this) == NEARBY_NONE) continue;
+                    if (neighbor.isRevealed()) continue;
+                    if (neighbor.numFlags() != 0) continue;
+                    numCovered += 1;
+                    if (numCovered > 1) continue outer;
+                }
+            }
+
             reveal.push(tile);
 
             for (const next of this.iterPattern(tile.x, tile.y, tile.mineSearchPattern())) {
@@ -122,8 +146,10 @@ export class World {
         }
 
         for (const tile of reveal) {
+            this.dispatchEvent('change', { x, y });
             if (!tile.reveal()) {
                 this.lockTile(tile.x, tile.y);
+                this.dispatchEvent('death', { x, y });
             }
         }
     }
@@ -137,6 +163,8 @@ export class World {
     }
 
     public constructor() {
+        super();
+
         // Auto-reveal nearest tile to (0, 0) that has 0 nearby mines.
         for (const { x, y } of spiralIter(0, 0)) {
             const tile = this.getTile(x, y);

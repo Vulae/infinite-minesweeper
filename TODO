@@ -12,8 +12,7 @@
 [X] - Blueberry: Tiles may have up to 3 mines
 [X] - Strawberry: Each tile has some tiles in a 5x5 area where it can pull what mines count towards its counter
 [ ] - Pistachio: Some tiles may have 2 values, with 1 being correct & 1 being incorrect
-[ ] - Waffle: 2x2 checkerboard areas, with alternating between 1 mine and 3 mines in the 2x2 areas
-    [ ] - Stroopwafel: 3x3 checkerboard areas, with alternating between 1 mine and 9 mines in the 3x3 areas 
-[ ] - Cookies & cream: There are also negative mines that add -1 to the tile counter
-    [ ] - Mint cookies & cream: Imaginary number mines?? (Maybe not IDK how this would work.)
+[X] - Waffle: 2x2 checkerboard areas, with alternating between 1 mine and 3 mines in the 2x2 areas
+    [X] - Stroopwafel: 3x3 checkerboard areas, with alternating between 1 mine and 9 mines in the 3x3 areas 
+[X] - Cookies & cream: There are also negative mines that add -1 to the tile counter
 [ ] - Cotton candy: 2 colors of tiles (light blue and pink), with blue tiles counting mines vertically & pink tiles counting mines horizontally.

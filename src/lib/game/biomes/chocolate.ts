@@ -12,4 +12,8 @@ export class TileBiomeChocolate extends TileBasicSingularMine {
     ): keyof Renderer['TILESET']['textures'] {
         return covered ? 'tile_chocolate_covered' : 'tile_chocolate_uncovered';
     }
+
+    public color(): number {
+        return 0x5b440a;
+    }
 }

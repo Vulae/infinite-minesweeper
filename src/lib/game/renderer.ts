@@ -54,7 +54,13 @@ class OutlineRenderer {
     }
 }
 
+const CHUNK_SIZE: number = 32;
+
+type ChunkPos = `${number},${number}`;
+
 export class Renderer {
+    private readonly cacheZoomoutChunks: Map<ChunkPos, ImageData> = new Map();
+
     public readonly TILESET = new TextureAtlas(
         {
             null: [0, 0, 16, 16],
@@ -98,14 +104,49 @@ export class Renderer {
             nearby_22: [48, 352, 16, 16],
             nearby_23: [48, 368, 16, 16],
             nearby_24: [48, 384, 16, 16],
+            // nearby_n: [64, 0, 16, 16],
+            nearby_n1: [64, 16, 16, 16],
+            nearby_n2: [64, 32, 16, 16],
+            nearby_n3: [64, 48, 16, 16],
+            nearby_n4: [64, 64, 16, 16],
+            nearby_n5: [64, 80, 16, 16],
+            nearby_n6: [64, 96, 16, 16],
+            nearby_n7: [64, 112, 16, 16],
+            nearby_n8: [64, 128, 16, 16],
+            nearby_n9: [64, 144, 16, 16],
+            nearby_n10: [64, 160, 16, 16],
+            nearby_n11: [64, 176, 16, 16],
+            nearby_n12: [64, 192, 16, 16],
+            nearby_n13: [64, 208, 16, 16],
+            nearby_n14: [64, 224, 16, 16],
+            nearby_n15: [64, 240, 16, 16],
+            nearby_n16: [64, 256, 16, 16],
+            nearby_n17: [64, 272, 16, 16],
+            nearby_n18: [64, 288, 16, 16],
+            nearby_n19: [64, 304, 16, 16],
+            nearby_n20: [64, 320, 16, 16],
+            nearby_n21: [64, 336, 16, 16],
+            nearby_n22: [64, 352, 16, 16],
+            nearby_n23: [64, 368, 16, 16],
+            nearby_n24: [64, 384, 16, 16],
             tile_vanilla_covered: [80, 0, 16, 16],
             tile_vanilla_uncovered: [96, 0, 16, 16],
             tile_chocolate_covered: [80, 16, 16, 16],
             tile_chocolate_uncovered: [96, 16, 16, 16],
+            tile_waffle_1_covered: [80, 32, 16, 16],
+            tile_waffle_1_uncovered: [96, 32, 16, 16],
+            tile_waffle_2_covered: [112, 32, 16, 16],
+            tile_waffle_2_uncovered: [128, 32, 16, 16],
+            tile_stroopwafel_1_covered: [80, 48, 16, 16],
+            tile_stroopwafel_1_uncovered: [96, 48, 16, 16],
+            tile_stroopwafel_2_covered: [112, 48, 16, 16],
+            tile_stroopwafel_2_uncovered: [128, 48, 16, 16],
             tile_blueberry_covered: [80, 64, 16, 16],
             tile_blueberry_uncovered: [96, 64, 16, 16],
             tile_strawberry_covered: [80, 80, 16, 16],
-            tile_strawberry_uncovered: [96, 80, 16, 16]
+            tile_strawberry_uncovered: [96, 80, 16, 16],
+            tile_cookiesandcream_covered: [80, 96, 16, 16],
+            tile_cookiesandcream_uncovered: [96, 96, 16, 16]
         },
         '/infinite-minesweeper/tileset.png'
     );
@@ -122,7 +163,11 @@ export class Renderer {
         this.game = game;
         this.world = this.game.world;
         this.viewport = new Viewport(this.game.world);
-        this.viewport.addEventListener('change', () => this.render());
+        this.world.addEventListener('change', ({ data: { x, y } }) => {
+            const chunkX = Math.floor(x / CHUNK_SIZE);
+            const chunkY = Math.floor(y / CHUNK_SIZE);
+            this.cacheZoomoutChunks.delete(`${chunkX},${chunkY}`);
+        });
     }
 
     public setCanvas(canvas: HTMLCanvasElement | null) {
@@ -137,7 +182,7 @@ export class Renderer {
 
     private readonly outlineRenderer: OutlineRenderer = new OutlineRenderer();
 
-    public render() {
+    private renderHighres(): void {
         if (!this.canvas || !this.ctx) return;
 
         this.ctx.reset();
@@ -186,13 +231,108 @@ export class Renderer {
         }
     }
 
-    public renderNearbyNumber(ctx: CanvasRenderingContext2D, n: number) {
-        if (n < 0 || n > 24) {
-            console.warn('Invalid nearby number to render:', n);
-            return;
+    private getLowresChunk(chunkX: number, chunkY: number): ImageData {
+        function colorModifyTile(color: number, tile: Tile): number {
+            if (tile.isRevealed()) {
+                const r = (color & 0xff0000) >> 16;
+                const g = (color & 0x00ff00) >> 8;
+                const b = color & 0x0000ff;
+                const dr = Math.floor(r * 0.8);
+                const dg = Math.floor(g * 0.8);
+                const db = Math.floor(b * 0.8);
+                return (dr << 16) | (dg << 8) | db;
+            } else if (tile.numFlags() != 0) {
+                const r = (color & 0xff0000) >> 16;
+                const g = (color & 0x00ff00) >> 8;
+                const b = color & 0x0000ff;
+                const rr = Math.min(Math.floor(r + 100), 255);
+                const dg = Math.floor(g * 0.6);
+                const db = Math.floor(b * 0.6);
+                return (rr << 16) | (dg << 8) | db;
+            } else {
+                return color;
+            }
         }
-        // @ts-expect-error The check above doesn't narrow the type enough
-        this.TILESET.drawTexture(ctx, `nearby_${n}`, 0, 0, 1, 1);
+
+        const chunkPos: ChunkPos = `${chunkX},${chunkY}`;
+        if (!this.cacheZoomoutChunks.has(chunkPos)) {
+            const image = new ImageData(CHUNK_SIZE, CHUNK_SIZE);
+            for (let dx = 0; dx < CHUNK_SIZE; dx++) {
+                for (let dy = 0; dy < CHUNK_SIZE; dy++) {
+                    const x = chunkX * CHUNK_SIZE + dx;
+                    const y = chunkY * CHUNK_SIZE + dy;
+                    const tile = this.world.getTile(x, y);
+                    // const tile = this.world.generator.generateTile(x, y);
+                    const color = colorModifyTile(tile.color(), tile);
+                    const i = dx + dy * CHUNK_SIZE;
+                    image.data[i * 4 + 0] = (color & 0xff0000) >> 16;
+                    image.data[i * 4 + 1] = (color & 0x00ff00) >> 8;
+                    image.data[i * 4 + 2] = color & 0x0000ff;
+                    image.data[i * 4 + 3] = 0xff;
+                }
+            }
+            this.cacheZoomoutChunks.set(chunkPos, image);
+        }
+        return this.cacheZoomoutChunks.get(chunkPos)!;
+    }
+
+    public isLowres(): boolean {
+        return this.viewport.scale < 16;
+    }
+
+    private readonly lowresCanvas: CanvasStore = new CanvasStore({
+        size: { width: CHUNK_SIZE, height: CHUNK_SIZE }
+    });
+
+    private renderLowres(): void {
+        if (!this.canvas || !this.ctx) return;
+
+        this.ctx.reset();
+        this.ctx.imageSmoothingEnabled = false;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.viewport.transformCtx(this.canvas, this.ctx);
+
+        const bounds = this.viewport.bounds(this.canvas, true);
+        const minX = Math.floor(bounds.minX / CHUNK_SIZE);
+        const minY = Math.floor(bounds.minY / CHUNK_SIZE);
+        const maxX = Math.ceil(bounds.maxX / CHUNK_SIZE);
+        const maxY = Math.ceil(bounds.maxY / CHUNK_SIZE);
+
+        for (let x = minX; x < maxX; x++) {
+            for (let y = minY; y < maxY; y++) {
+                const lowres = this.getLowresChunk(x, y);
+                this.lowresCanvas.ctx.putImageData(lowres, 0, 0);
+                this.ctx.drawImage(this.lowresCanvas.canvas, x * CHUNK_SIZE, y * CHUNK_SIZE);
+            }
+        }
+    }
+
+    public render(): void {
+        if (!this.isLowres()) {
+            this.renderHighres();
+        } else {
+            this.renderLowres();
+        }
+    }
+
+    public renderNearbyNumber(ctx: CanvasRenderingContext2D, n: number) {
+        if (n < 0) {
+            if (n < -24) {
+                console.warn('Invalid nearby number to render:', n);
+                return;
+            }
+            // @ts-expect-error The check above doesn't narrow the type enough
+            this.TILESET.drawTexture(ctx, `nearby_n${Math.abs(n)}`);
+        } else {
+            if (n > 24) {
+                console.warn('Invalid nearby number to render:', n);
+                return;
+            }
+            // @ts-expect-error The check above doesn't narrow the type enough
+            this.TILESET.drawTexture(ctx, `nearby_${n}`, 0, 0, 1, 1);
+        }
     }
 
     public renderNearbyNumberTile(ctx: CanvasRenderingContext2D, tile: Tile) {

@@ -12,4 +12,8 @@ export class TileBiomeVanilla extends TileBasicSingularMine {
     ): keyof Renderer['TILESET']['textures'] {
         return covered ? 'tile_vanilla_covered' : 'tile_vanilla_uncovered';
     }
+
+    public color(): number {
+        return 0x808080;
+    }
 }

@@ -24,4 +24,8 @@ export class TileBiomeStrawberry extends TileBasicSingularMine {
     ): keyof Renderer['TILESET']['textures'] {
         return covered ? 'tile_strawberry_covered' : 'tile_strawberry_uncovered';
     }
+
+    public color(): number {
+        return 0xf888c9;
+    }
 }

@@ -1,18 +1,10 @@
-import { EventDispatcher } from '$lib/eventDispatcher';
 import type { Tile } from './tile';
 import type { World } from './world';
 
-export class Viewport extends EventDispatcher<{
-    change: null;
-}> {
-    public change(): void {
-        this.dispatchEvent('change', null);
-    }
-
+export class Viewport {
     public readonly world: World;
 
     constructor(world: World, viewport?: { x: number; y: number; scale: number }) {
-        super();
         this.world = world;
         if (viewport) {
             this.load(viewport);
