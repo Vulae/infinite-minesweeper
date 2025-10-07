@@ -1,4 +1,4 @@
-import type { Renderer } from '../renderer';
+import type { Renderer } from '../renderer/renderer';
 import { TileBasicSingularMine } from '../tile';
 
 export class TileBiomeStrawberry extends TileBasicSingularMine {
@@ -27,5 +27,9 @@ export class TileBiomeStrawberry extends TileBasicSingularMine {
 
     public color(): number {
         return 0xf888c9;
+    }
+
+    public tileCoveredTexture(): keyof Renderer['TILESET']['textures'] {
+        return 'tile_strawberry_covered';
     }
 }

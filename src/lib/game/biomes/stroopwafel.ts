@@ -1,4 +1,4 @@
-import type { Renderer } from '../renderer';
+import type { Renderer } from '../renderer/renderer';
 import { TileBasicSingularMine } from '../tile';
 
 export class TileBiomeStroopwafel extends TileBasicSingularMine {
@@ -24,5 +24,9 @@ export class TileBiomeStroopwafel extends TileBasicSingularMine {
 
     public color(): number {
         return this.isDark ? 0xeda840 : 0xbf7200;
+    }
+
+    public tileCoveredTexture(): keyof Renderer['TILESET']['textures'] {
+        return this.isDark ? 'tile_stroopwafel_1_covered' : 'tile_stroopwafel_2_covered';
     }
 }

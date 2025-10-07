@@ -1,4 +1,4 @@
-import type { Renderer } from '../renderer';
+import type { Renderer } from '../renderer/renderer';
 import { BASIC_PATTERN, Tile } from '../tile';
 
 export class TileBiomeBlueberry extends Tile {
@@ -61,11 +61,19 @@ export class TileBiomeBlueberry extends Tile {
             }
         } else {
             renderer.TILESET.drawTexture(ctx, 'tile_blueberry_uncovered');
-            renderer.renderNearbyNumberTile(ctx, this);
+            renderer.worldRenderer.renderNearbyNumberTile(ctx, this);
         }
     }
 
     public color(): number {
         return 0x2453a5;
+    }
+
+    public tileCoveredTexture(): keyof Renderer['TILESET']['textures'] {
+        return 'tile_blueberry_covered';
+    }
+
+    public tileFinalFlagTexture(): keyof Renderer['TILESET']['textures'] {
+        return 'flag_3';
     }
 }

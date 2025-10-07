@@ -3,8 +3,9 @@
 [ ] - Menu for controls, settings, & information
 [ ] - Saving/Loading
 
-[ ] - Reveal tile particle
-[ ] - Explosion/death particle
+[X] - Reveal tile particle
+[X] - Unflag tile particle
+[X] - Explosion/death particle
 
 [ ] - Better world generation (It uggo rn)
 

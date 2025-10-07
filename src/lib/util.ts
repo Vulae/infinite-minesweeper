@@ -41,3 +41,11 @@ export function mapRangeInt(
 ): number {
     return Math.floor(mapRange(value, valueMin, valueMax, outMin, outMax + 1));
 }
+
+export function clamp(x: number, min: number, max: number): number {
+    return x < min ? min : x > max ? max : x;
+}
+
+export function clampNormal(x: number): number {
+    return x < 0 ? 0 : x > 1 ? 1 : x;
+}

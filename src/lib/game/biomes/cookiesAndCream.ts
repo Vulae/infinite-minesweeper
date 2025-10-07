@@ -1,4 +1,4 @@
-import type { Renderer } from '../renderer';
+import type { Renderer } from '../renderer/renderer';
 import { BASIC_PATTERN, Tile } from '../tile';
 
 enum TileCookiesAndCreamState {
@@ -92,7 +92,7 @@ export class TileBiomeCookiesAndCream extends Tile {
             }
             case TileCookiesAndCreamState.Revealed: {
                 renderer.TILESET.drawTexture(ctx, 'tile_cookiesandcream_uncovered');
-                renderer.renderNearbyNumberTile(ctx, this);
+                renderer.worldRenderer.renderNearbyNumberTile(ctx, this);
                 break;
             }
             case TileCookiesAndCreamState.Flagged: {
@@ -110,5 +110,13 @@ export class TileBiomeCookiesAndCream extends Tile {
 
     public color(): number {
         return 0xdfdfdf;
+    }
+
+    public tileCoveredTexture(): keyof Renderer['TILESET']['textures'] {
+        return 'tile_cookiesandcream_covered';
+    }
+
+    public tileFinalFlagTexture(): keyof Renderer['TILESET']['textures'] {
+        return 'flag_inversed';
     }
 }

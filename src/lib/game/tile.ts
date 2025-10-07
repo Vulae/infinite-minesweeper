@@ -1,4 +1,4 @@
-import type { Renderer } from './renderer';
+import type { Renderer } from './renderer/renderer';
 import { NEARBY_NONE, type World } from './world';
 
 function nearbyCounter(
@@ -60,9 +60,15 @@ export abstract class Tile {
      * Returns a color of this tile for lowres rendering mode
      * @returns 0xRRGGBB
      */
-    public color(): number {
-        return (this.x + this.y) % 2 == 0 ? 0x000000 : 0xff00ff;
-    }
+    public abstract color(): number;
+    /**
+     * @returns This tile's covered texture
+     */
+    public abstract tileCoveredTexture(): keyof Renderer['TILESET']['textures'];
+    /**
+     * @returns This tile's final flag texture
+     */
+    public abstract tileFinalFlagTexture(): keyof Renderer['TILESET']['textures'];
 }
 
 export const BASIC_PATTERN: [number, number][] = [
@@ -136,12 +142,16 @@ export abstract class TileBasicSingularMine extends Tile {
                 break;
             case TileBasicSingularMineState.Revealed:
                 renderer.TILESET.drawTexture(ctx, this.getTileKey(renderer, false));
-                renderer.renderNearbyNumberTile(ctx, this);
+                renderer.worldRenderer.renderNearbyNumberTile(ctx, this);
                 break;
             case TileBasicSingularMineState.Flagged:
                 renderer.TILESET.drawTexture(ctx, this.getTileKey(renderer, true));
                 renderer.TILESET.drawTexture(ctx, 'flag');
                 break;
         }
+    }
+
+    public tileFinalFlagTexture(): keyof Renderer['TILESET']['textures'] {
+        return 'flag';
     }
 }

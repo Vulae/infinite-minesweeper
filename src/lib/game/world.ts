@@ -26,6 +26,9 @@ class Chunk {
     }
 
     public static generate(chunkX: number, chunkY: number, generator: WorldGenerator): Chunk {
+        if (!Number.isInteger(chunkX) || !Number.isInteger(chunkY)) {
+            throw new Error(`Invalid chunk pos: ${chunkX}, ${chunkY}`);
+        }
         const chunk = new Chunk();
         for (let dy = 0; dy < CHUNK_SIZE; dy++) {
             for (let dx = 0; dx < CHUNK_SIZE; dx++) {
@@ -43,7 +46,9 @@ type ChunkPos = `${number},${number}`;
 
 export class World extends EventDispatcher<{
     change: { x: number; y: number };
-    death: { x: number; y: number };
+    death: { tile: Tile };
+    reveal: { tile: Tile };
+    flag: { tile: Tile; previousFlagCount: number };
 }> {
     public readonly generator: WorldGenerator = new WorldGenerator(
         Math.floor(Math.random() * 4294967296)
@@ -67,6 +72,18 @@ export class World extends EventDispatcher<{
         const tileX = x - chunkX * CHUNK_SIZE;
         const tileY = y - chunkY * CHUNK_SIZE;
         const chunk = this.getChunk(chunkX, chunkY);
+        return chunk.getTile(tileX, tileY);
+    }
+
+    public getTileDoNotGenerate(x: number, y: number): Tile | null {
+        const chunkX = Math.floor(x / CHUNK_SIZE);
+        const chunkY = Math.floor(y / CHUNK_SIZE);
+        const tileX = x - chunkX * CHUNK_SIZE;
+        const tileY = y - chunkY * CHUNK_SIZE;
+        const chunk = this.chunks.get(`${chunkX},${chunkY}`);
+        if (chunk == null) {
+            return null;
+        }
         return chunk.getTile(tileX, tileY);
     }
 
@@ -101,11 +118,16 @@ export class World extends EventDispatcher<{
         const tile = this.getTile(x, y);
         if (tile.numFlags() != 0) return;
 
-        this.dispatchEvent('change', { x, y });
-        if (!tile.reveal()) {
-            this.lockTile(x, y);
-            this.dispatchEvent('death', { x, y });
-            return;
+        if (!tile.isRevealed()) {
+            if (!tile.reveal()) {
+                this.lockTile(x, y);
+                this.dispatchEvent('change', { x, y });
+                this.dispatchEvent('death', { tile });
+                return;
+            } else {
+                this.dispatchEvent('change', { x, y });
+                this.dispatchEvent('reveal', { tile });
+            }
         }
 
         const reveal: Tile[] = [];
@@ -146,10 +168,15 @@ export class World extends EventDispatcher<{
         }
 
         for (const tile of reveal) {
+            if (tile.numFlags() != 0) continue;
+            if (tile.isRevealed()) continue;
+
             this.dispatchEvent('change', { x, y });
             if (!tile.reveal()) {
                 this.lockTile(tile.x, tile.y);
-                this.dispatchEvent('death', { x, y });
+                this.dispatchEvent('death', { tile });
+            } else {
+                this.dispatchEvent('reveal', { tile });
             }
         }
     }
@@ -159,7 +186,13 @@ export class World extends EventDispatcher<{
             return;
         }
         const tile = this.getTile(x, y);
+        if (tile.isRevealed()) return;
+
+        const previousFlagCount = tile.numFlags();
         tile.flag();
+
+        this.dispatchEvent('change', { x, y });
+        this.dispatchEvent('flag', { tile, previousFlagCount });
     }
 
     public constructor() {

@@ -1,5 +1,5 @@
 import { hashNormalized } from '$lib/random/noise';
-import type { Renderer } from '../renderer';
+import type { Renderer } from '../renderer/renderer';
 import { TileBasicSingularMine } from '../tile';
 
 export function waffleIsMine(
@@ -45,5 +45,9 @@ export class TileBiomeWaffle extends TileBasicSingularMine {
 
     public color(): number {
         return this.isDark ? 0xf7d299 : 0xa07a40;
+    }
+
+    public tileCoveredTexture(): keyof Renderer['TILESET']['textures'] {
+        return this.isDark ? 'tile_waffle_1_covered' : 'tile_waffle_2_covered';
     }
 }
