@@ -94,7 +94,6 @@ export class ParticleRenderer {
 
         ctx.reset();
         ctx.imageSmoothingEnabled = false;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         this.renderer.viewport.transformCtx(canvas, ctx);
 

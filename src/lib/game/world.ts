@@ -154,7 +154,7 @@ export class World extends EventDispatcher<{
             if (tile.numFlags() != 0) continue;
             if (tile.isRevealed()) continue;
 
-            this.dispatchEvent('change', { x, y });
+            this.dispatchEvent('change', { x: tile.x, y: tile.y });
             if (!tile.reveal()) {
                 this.lockTile(tile.x, tile.y);
                 this.dispatchEvent('death', { tile });

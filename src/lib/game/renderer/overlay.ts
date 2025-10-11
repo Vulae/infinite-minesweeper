@@ -21,7 +21,6 @@ class OutlineRenderer {
         canvas.height = tile_size * num_tiles + outline_width * 2;
 
         ctx.reset();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         ctx.translate(outline_width, outline_width);
         ctx.translate(tile_size * Math.floor(num_tiles / 2), tile_size * Math.floor(num_tiles / 2));
@@ -102,7 +101,6 @@ export class OverlayRenderer {
 
         ctx.reset();
         ctx.imageSmoothingEnabled = false;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         this.renderer.viewport.transformCtx(canvas, ctx);
 

@@ -5,6 +5,8 @@ interface CanvasStoreCanvasProps {
 }
 
 interface CanvasStoreContextProps {
+    alpha?: boolean;
+    willReadFrequently?: boolean;
     imageSmoothing?: boolean;
 }
 
@@ -42,7 +44,10 @@ export class CanvasStore {
 
     public get ctx(): CanvasRenderingContext2D {
         if (!this._ctx) {
-            this._ctx = this.canvas.getContext('2d');
+            this._ctx = this.canvas.getContext('2d', {
+                alpha: this.props.alpha ?? true,
+                willReadFrequently: this.props.willReadFrequently ?? false
+            });
             if (this._ctx === null) {
                 throw new Error('Canvas rendering context 2d not supported in your browser.');
             }

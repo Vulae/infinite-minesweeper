@@ -94,6 +94,7 @@ const TILESET = new TextureAtlas(
     },
     '/infinite-minesweeper/tileset.png'
 );
+const TILESET_TILE_SIZE: number = 16;
 
 export class Renderer {
     public readonly game: Game;
@@ -122,6 +123,7 @@ export class Renderer {
     }
 
     public readonly TILESET = TILESET;
+    public readonly TILESET_TILE_SIZE: number = TILESET_TILE_SIZE;
 
     public setNeedsRerender(): void {
         this.worldRenderer.setNeedsRerender();
