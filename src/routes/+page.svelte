@@ -132,10 +132,10 @@
                         class="h-full"
                         style:image-rendering="pixelated"
                     />
-                    <div class="bg-zinc-100 px-4 py-2">
+                    <section class="bg-zinc-100 px-4 py-2">
                         <h1 class="text-2xl font-bold">{infoTabBiome.name}</h1>
-                        <span class="text-lg leading-0">{infoTabBiome.description}</span>
-                    </div>
+                        <p class="text-lg">{infoTabBiome.description}</p>
+                    </section>
                 </div>
                 <button
                     class="cursor-pointer px-2 hover:[&>*]:translate-x-1"
@@ -178,9 +178,9 @@
                 <!-- <button class="cursor-pointer" title="Settings">
                     <LucideSettings />
                 </button> -->
-                <!-- <button class="cursor-pointer" title="Screenshot" onclick={() => beginScreenshot()}>
+                <button class="cursor-pointer" title="Screenshot" onclick={() => beginScreenshot()}>
                     <LucideImage />
-                </button> -->
+                </button>
                 <div class="h-0.5 w-full rounded-full bg-white"></div>
                 <div class="flex flex-col items-center justify-center" title="Deaths">
                     <LucideSkull />

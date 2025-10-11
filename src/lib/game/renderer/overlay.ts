@@ -2,6 +2,7 @@ import { CanvasStore } from '$lib';
 import { TileBiomeStrawberry } from '../biomes/strawberry';
 import type { Renderer } from './renderer';
 import type { EventListener } from '$lib/eventDispatcher';
+import { SCREENSHOT_MAX_SIZE } from '../consts';
 
 class OutlineRenderer {
     private readonly canvas: CanvasStore = new CanvasStore();
@@ -90,6 +91,9 @@ export class OverlayRenderer {
 
     public hoverTile: { x: number; y: number } | null = null;
 
+    public screenshotState: { state: 'pos1' } | { state: 'pos2'; x: number; y: number } | null =
+        null;
+
     private readonly outlineRenderer: OutlineRenderer = new OutlineRenderer();
 
     public render(): void {
@@ -105,26 +109,54 @@ export class OverlayRenderer {
         this.renderer.viewport.transformCtx(canvas, ctx);
 
         if (this.hoverTile) {
-            const hoverTile = this.renderer.game.world.getTile(this.hoverTile.x, this.hoverTile.y);
-
-            if (hoverTile instanceof TileBiomeStrawberry && hoverTile.isRevealed()) {
-                ctx.save();
-                ctx.translate(hoverTile.x, hoverTile.y);
-
-                const outlineWidth = 2;
-                const outline = this.outlineRenderer.makeOutline(
-                    16,
-                    5,
-                    [[0, 0], ...hoverTile.mineSearchPattern()],
-                    // `oklch(0.72 0.17 ${(Date.now() / 10) % 360})`,
-                    'black',
-                    outlineWidth,
-                    'rgba(0, 0, 0, 0.2)'
+            if (this.screenshotState) {
+                switch (this.screenshotState.state) {
+                    case 'pos1': {
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.fillRect(this.hoverTile.x, this.hoverTile.y, 1, 1);
+                        ctx.restore();
+                        break;
+                    }
+                    case 'pos2': {
+                        const xMin = Math.min(this.screenshotState.x, this.hoverTile.x);
+                        const yMin = Math.min(this.screenshotState.y, this.hoverTile.y);
+                        const xMax = Math.max(this.screenshotState.x, this.hoverTile.x);
+                        const yMax = Math.max(this.screenshotState.y, this.hoverTile.y);
+                        const width = Math.min(xMax - xMin + 1, SCREENSHOT_MAX_SIZE);
+                        const height = Math.min(yMax - yMin + 1, SCREENSHOT_MAX_SIZE);
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                        ctx.fillRect(xMin, yMin, width, height);
+                        ctx.restore();
+                        break;
+                    }
+                }
+            } else {
+                const hoverTile = this.renderer.game.world.getTile(
+                    this.hoverTile.x,
+                    this.hoverTile.y
                 );
-                const p = (1 / 16) * outlineWidth;
-                ctx.drawImage(outline, -2 - p, -2 - p, 5 + p * 2, 5 + p * 2);
 
-                ctx.restore();
+                if (hoverTile instanceof TileBiomeStrawberry && hoverTile.isRevealed()) {
+                    ctx.save();
+                    ctx.translate(hoverTile.x, hoverTile.y);
+
+                    const outlineWidth = 2;
+                    const outline = this.outlineRenderer.makeOutline(
+                        16,
+                        5,
+                        [[0, 0], ...hoverTile.mineSearchPattern()],
+                        // `oklch(0.72 0.17 ${(Date.now() / 10) % 360})`,
+                        'black',
+                        outlineWidth,
+                        'rgba(0, 0, 0, 0.2)'
+                    );
+                    const p = (1 / 16) * outlineWidth;
+                    ctx.drawImage(outline, -2 - p, -2 - p, 5 + p * 2, 5 + p * 2);
+
+                    ctx.restore();
+                }
             }
         }
     }

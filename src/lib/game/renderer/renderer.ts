@@ -195,6 +195,8 @@ export class Renderer {
         renderer.particleRenderer.setCanvas(particleStore.canvas);
         renderer.overlayRenderer.setCanvas(overlayStore.canvas);
 
+        renderer.worldRenderer.setScreenshotMode();
+
         if (hover) {
             renderer.overlayRenderer.hoverTile = { x: hover.x, y: hover.y };
         }

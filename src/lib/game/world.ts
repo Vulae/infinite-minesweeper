@@ -1,11 +1,12 @@
 import { EventDispatcher } from '$lib/eventDispatcher';
 import { TileBiomeCookiesAndCream } from './biomes/cookiesAndCream';
+import { WORLD_GENERATION_CHUNK_SIZE } from './consts';
 import { WorldGenerator } from './generator';
 import type { Tile } from './tile';
 
 export const NEARBY_NONE: symbol = Symbol('NEARBY_NONE');
 
-const CHUNK_SIZE: number = 32;
+const CHUNK_SIZE: number = WORLD_GENERATION_CHUNK_SIZE;
 
 class Chunk {
     private readonly tiles: Tile[] = [];

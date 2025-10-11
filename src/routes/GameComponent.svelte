@@ -6,6 +6,8 @@
     import { Viewport } from '$lib/game/viewport';
     import Modal from './Modal.svelte';
     import ImageDataView from './ImageDataView.svelte';
+    import { LucideCamera } from '@lucide/svelte';
+    import { SCREENSHOT_MAX_SIZE } from '$lib/game/consts';
 
     let {
         game,
@@ -26,6 +28,12 @@
 
     let animationFrame: number = -1;
 
+    let hoverTile: { x: number; y: number } | null = $state(null);
+
+    $effect(() => {
+        renderer.overlayRenderer.hoverTile = hoverTile;
+    });
+
     let screenshotState:
         | {
               state: 'none';
@@ -45,6 +53,30 @@
               width: number;
               height: number;
           } = $state({ state: 'none' });
+
+    $effect(() => {
+        switch (screenshotState.state) {
+            case 'capture_pos1': {
+                renderer.overlayRenderer.screenshotState = { state: 'pos1' };
+                renderer.overlayRenderer.setNeedsRerender();
+                break;
+            }
+            case 'capture_pos2': {
+                renderer.overlayRenderer.screenshotState = {
+                    state: 'pos2',
+                    x: screenshotState.x,
+                    y: screenshotState.y
+                };
+                renderer.overlayRenderer.setNeedsRerender();
+                break;
+            }
+            default: {
+                renderer.overlayRenderer.screenshotState = null;
+                renderer.overlayRenderer.setNeedsRerender();
+                break;
+            }
+        }
+    });
 
     $effect(() => {
         renderer.worldRenderer.setCanvas(worldCanvas);
@@ -141,8 +173,8 @@
                             state: 'view',
                             x: sx,
                             y: sy,
-                            width: Math.max(ex - sx + 1, 1),
-                            height: Math.max(ey - sy + 1, 1)
+                            width: Math.min(ex - sx + 1, SCREENSHOT_MAX_SIZE),
+                            height: Math.min(ey - sy + 1, SCREENSHOT_MAX_SIZE)
                         };
                     }
                     return;
@@ -163,36 +195,21 @@
             renderer.worldRenderer.setNeedsRerender();
         }}
         oncontrollerhover={(pos) => {
-            if (screenshotState.state != 'none') {
-                if (renderer.overlayRenderer.hoverTile != null) {
-                    renderer.overlayRenderer.hoverTile = null;
-                    renderer.overlayRenderer.setNeedsRerender();
-                }
-                return;
-            }
-
-            if (renderer.worldRenderer.isLowres()) {
-                if (renderer.overlayRenderer.hoverTile != null) {
-                    renderer.overlayRenderer.hoverTile = null;
-                    renderer.overlayRenderer.setNeedsRerender();
-                }
-                return;
-            }
             let lastHoverTileX: number | null = null;
             let lastHoverTileY: number | null = null;
-            if (renderer.overlayRenderer.hoverTile != null) {
-                lastHoverTileX = renderer.overlayRenderer.hoverTile.x;
-                lastHoverTileY = renderer.overlayRenderer.hoverTile.y;
+            if (hoverTile != null) {
+                lastHoverTileX = hoverTile.x;
+                lastHoverTileY = hoverTile.y;
             }
             if (!pos) {
-                renderer.overlayRenderer.hoverTile = null;
+                hoverTile = null;
             } else {
                 const worldPos = renderer.viewport.canvasPos(worldCanvas, pos.x, pos.y, true);
-                renderer.overlayRenderer.hoverTile = worldPos;
+                hoverTile = worldPos;
             }
             if (
-                (renderer.overlayRenderer.hoverTile ?? { x: null }).x !== lastHoverTileX ||
-                (renderer.overlayRenderer.hoverTile ?? { y: null }).y !== lastHoverTileY
+                (hoverTile ?? { x: null }).x !== lastHoverTileX ||
+                (hoverTile ?? { y: null }).y !== lastHoverTileY
             ) {
                 renderer.overlayRenderer.setNeedsRerender();
             }
@@ -202,7 +219,39 @@
         <canvas bind:this={particleCanvas}></canvas>
         <canvas bind:this={overlayCanvas}></canvas>
     </Controller>
-    {#if screenshotState.state == 'view'}
+    {#if screenshotState.state == 'capture_pos1' || screenshotState.state == 'capture_pos2'}
+        <div class="pointer-events-none p-4">
+            <fieldset
+                class="h-full w-full rounded-md border-8 border-white"
+                style:filter="drop-shadow(2px 3px 2px black)"
+            >
+                <legend
+                    class="ml-16 flex items-center gap-4 rounded-lg bg-white px-4 font-bold text-black"
+                >
+                    <LucideCamera />
+                    <span>
+                        {#if screenshotState.state == 'capture_pos1'}
+                            {#if hoverTile}
+                                At {hoverTile.x}, {hoverTile.y}
+                            {/if}
+                        {:else if screenshotState.state == 'capture_pos2'}
+                            {#if hoverTile}
+                                {@const minX = Math.min(screenshotState.x, hoverTile.x)}
+                                {@const minY = Math.min(screenshotState.y, hoverTile.y)}
+                                {@const maxX = Math.max(screenshotState.x, hoverTile.x)}
+                                {@const maxY = Math.max(screenshotState.y, hoverTile.y)}
+                                {@const width = Math.min(maxX - minX + 1, SCREENSHOT_MAX_SIZE)}
+                                {@const height = Math.min(maxY - minY + 1, SCREENSHOT_MAX_SIZE)}
+                                At {minX}, {minY} with size {width}x{height}
+                            {:else}
+                                At {screenshotState.x}, {screenshotState.y}
+                            {/if}
+                        {/if}
+                    </span>
+                </legend>
+            </fieldset>
+        </div>
+    {:else if screenshotState.state == 'view'}
         {@const screenshot = renderer.screenshot({
             ...screenshotState,
             hover: { x: renderer.viewport.x, y: renderer.viewport.y }

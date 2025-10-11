@@ -3,6 +3,7 @@ import type { Tile } from '../tile';
 import { NEARBY_NONE } from '../world';
 import type { Renderer } from './renderer';
 import type { EventListener } from '$lib/eventDispatcher';
+import { RENDERER_WORLD_HIGHRES_CHUNK_SIZE, RENDERER_WORLD_LOWRES_CHUNK_SIZE } from '../consts';
 
 type ChunkPos = `${number},${number}`;
 
@@ -14,8 +15,9 @@ function doesAABBintersect(
 }
 
 class HighresWorldRenderer {
-    public readonly CHUNK_SIZE: number = 16;
+    public readonly CHUNK_SIZE: number = RENDERER_WORLD_HIGHRES_CHUNK_SIZE;
 
+    public screenshotMode: boolean = false;
     private readonly renderer: Renderer;
 
     public constructor(renderer: Renderer) {
@@ -67,6 +69,20 @@ class HighresWorldRenderer {
 
     private readonly chunkCanvas: CanvasStore;
 
+    private drawTile(ctx: CanvasRenderingContext2D, dx: number, dy: number, tile: Tile): void {
+        ctx.save();
+        ctx.translate(dx, dy);
+        tile.render(ctx, this.renderer);
+        ctx.restore();
+
+        if (this.renderer.game.world.isTileLocked(tile.x, tile.y)) {
+            ctx.save();
+            ctx.translate(dx, dy);
+            this.renderer.TILESET.drawTexture(ctx, 'skull');
+            ctx.restore();
+        }
+    }
+
     private getChunkImageData(chunkX: number, chunkY: number): ImageData {
         const chunkPos: ChunkPos = `${chunkX},${chunkY}`;
         if (!this.chunkCache.has(chunkPos)) {
@@ -83,17 +99,7 @@ class HighresWorldRenderer {
 
                     const tile = this.renderer.game.world.getTile(x, y);
 
-                    ctx.save();
-                    ctx.translate(dx, dy);
-                    tile.render(ctx, this.renderer);
-                    ctx.restore();
-
-                    if (this.renderer.game.world.isTileLocked(tile.x, tile.y)) {
-                        ctx.save();
-                        ctx.translate(dx, dy);
-                        this.renderer.TILESET.drawTexture(ctx, 'skull');
-                        ctx.restore();
-                    }
+                    this.drawTile(ctx, dx, dy, tile);
                 }
             }
 
@@ -110,32 +116,38 @@ class HighresWorldRenderer {
 
         this.renderer.viewport.transformCtx(canvas, ctx);
 
-        const bounds = this.renderer.viewport.bounds(canvas, true);
-        const minX = Math.floor(bounds.minX / this.CHUNK_SIZE);
-        const minY = Math.floor(bounds.minY / this.CHUNK_SIZE);
-        const maxX = Math.ceil(bounds.maxX / this.CHUNK_SIZE);
-        const maxY = Math.ceil(bounds.maxY / this.CHUNK_SIZE);
+        if (!this.screenshotMode) {
+            const bounds = this.renderer.viewport.bounds(canvas, true);
+            const minX = Math.floor(bounds.minX / this.CHUNK_SIZE);
+            const minY = Math.floor(bounds.minY / this.CHUNK_SIZE);
+            const maxX = Math.ceil(bounds.maxX / this.CHUNK_SIZE);
+            const maxY = Math.ceil(bounds.maxY / this.CHUNK_SIZE);
 
-        for (let chunkX = minX; chunkX < maxX; chunkX++) {
-            for (let chunkY = minY; chunkY < maxY; chunkY++) {
-                const chunk = this.getChunkImageData(chunkX, chunkY);
-                this.chunkCanvas.ctx.reset();
-                this.chunkCanvas.ctx.putImageData(chunk, 0, 0);
-                ctx.drawImage(
-                    this.chunkCanvas.canvas,
-                    chunkX * this.CHUNK_SIZE,
-                    chunkY * this.CHUNK_SIZE,
-                    this.CHUNK_SIZE,
-                    this.CHUNK_SIZE
-                );
+            for (let chunkX = minX; chunkX < maxX; chunkX++) {
+                for (let chunkY = minY; chunkY < maxY; chunkY++) {
+                    const chunk = this.getChunkImageData(chunkX, chunkY);
+                    this.chunkCanvas.ctx.reset();
+                    this.chunkCanvas.ctx.putImageData(chunk, 0, 0);
+                    ctx.drawImage(
+                        this.chunkCanvas.canvas,
+                        chunkX * this.CHUNK_SIZE,
+                        chunkY * this.CHUNK_SIZE,
+                        this.CHUNK_SIZE,
+                        this.CHUNK_SIZE
+                    );
+                }
             }
+        } else {
+            this.renderer.viewport.forEachTileInViewport(canvas, (tile) => {
+                this.drawTile(ctx, tile.x, tile.y, tile);
+            });
         }
     }
 }
 
 // TODO: Different levels of mipmaps for infinite zoom
 class LowresWorldRenderer {
-    public readonly CHUNK_SIZE: number = 64;
+    public readonly CHUNK_SIZE: number = RENDERER_WORLD_LOWRES_CHUNK_SIZE;
 
     private readonly renderer: Renderer;
 
@@ -298,7 +310,14 @@ export class WorldRenderer {
         this.needsRerender = true;
     }
 
+    private screenshotMode: boolean = false;
+    public setScreenshotMode(): void {
+        this.screenshotMode = true;
+        this.highresRenderer.screenshotMode = true;
+    }
+
     public isLowres(): boolean {
+        if (this.screenshotMode) return false;
         return this.renderer.viewport.scale < 16;
     }
 
