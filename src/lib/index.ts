@@ -80,6 +80,9 @@ export class TextureAtlas<
         arg: string | HTMLImageElement | HTMLCanvasElement | ImageData
     ) {
         this.textures = textures;
+        if (typeof document == 'undefined') {
+            return;
+        }
         if (typeof arg == 'string') {
             const image = document.createElement('img');
             image.src = arg;

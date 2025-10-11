@@ -1,6 +1,7 @@
 import { CanvasStore } from '$lib';
 import { TileBiomeStrawberry } from '../biomes/strawberry';
 import type { Renderer } from './renderer';
+import type { EventListener } from '$lib/eventDispatcher';
 
 class OutlineRenderer {
     private readonly canvas: CanvasStore = new CanvasStore();
@@ -55,15 +56,23 @@ export class OverlayRenderer {
     private readonly renderer: Renderer;
     private needsRerender: boolean = true;
 
+    private readonly listeners: EventListener[] = [];
+
     public constructor(renderer: Renderer) {
         this.renderer = renderer;
-        this.renderer.game.world.addEventListener('change', ({ data: { x, y } }) => {
-            if (this.hoverTile !== null) {
-                if (this.hoverTile.x == x && this.hoverTile.y == y) {
-                    this.setNeedsRerender();
+        this.listeners.push(
+            this.renderer.game.world.addEventListener('change', ({ data: { x, y } }) => {
+                if (this.hoverTile !== null) {
+                    if (this.hoverTile.x == x && this.hoverTile.y == y) {
+                        this.setNeedsRerender();
+                    }
                 }
-            }
-        });
+            })
+        );
+    }
+
+    public destroyListeners(): void {
+        this.listeners.forEach((listener) => listener.destroy());
     }
 
     private store: CanvasStore = new CanvasStore();

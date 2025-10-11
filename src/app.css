@@ -1,5 +1,19 @@
-@import 'tailwindcss';
+@import 'tailwindcss/preflight';
+@import 'tailwindcss/utilities';
+@import 'tailwindcss/theme';
+
+* {
+    font-family: 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif';
+}
 
 body {
     background-color: #1f121b;
+}
+
+.force-overlap {
+    @apply grid h-screen w-full grid-cols-1 grid-rows-1;
+}
+
+.force-overlap > * {
+    @apply col-start-1 col-end-1 row-start-1 row-end-1 h-full w-full;
 }

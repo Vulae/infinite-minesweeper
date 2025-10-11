@@ -2,6 +2,7 @@ import { CanvasStore } from '$lib';
 import type { Tile } from '../tile';
 import { NEARBY_NONE } from '../world';
 import type { Renderer } from './renderer';
+import type { EventListener } from '$lib/eventDispatcher';
 
 const CHUNK_SIZE: number = 32;
 type ChunkPos = `${number},${number}`;
@@ -10,13 +11,21 @@ export class WorldRenderer {
     private readonly renderer: Renderer;
     private needsRerender: boolean = true;
 
+    private readonly listeners: EventListener[] = [];
+
     public constructor(renderer: Renderer) {
         this.renderer = renderer;
-        this.renderer.game.world.addEventListener('change', ({ data: { x, y } }) => {
-            const chunkX = Math.floor(x / CHUNK_SIZE);
-            const chunkY = Math.floor(y / CHUNK_SIZE);
-            this.cacheZoomoutChunks.delete(`${chunkX},${chunkY}`);
-        });
+        this.listeners.push(
+            this.renderer.game.world.addEventListener('change', ({ data: { x, y } }) => {
+                const chunkX = Math.floor(x / CHUNK_SIZE);
+                const chunkY = Math.floor(y / CHUNK_SIZE);
+                this.cacheZoomoutChunks.delete(`${chunkX},${chunkY}`);
+            })
+        );
+    }
+
+    public destroyListeners(): void {
+        this.listeners.forEach((listener) => listener.destroy());
     }
 
     private store: CanvasStore = new CanvasStore();
@@ -49,12 +58,12 @@ export class WorldRenderer {
             tile.render(ctx, this.renderer);
             ctx.restore();
 
-            if (this.renderer.game.world.isTileLocked(tile.x, tile.y)) {
-                ctx.save();
-                ctx.translate(tile.x, tile.y);
-                this.renderer.TILESET.drawTexture(ctx, 'skull');
-                ctx.restore();
-            }
+            // if (this.renderer.game.world.isTileLocked(tile.x, tile.y)) {
+            //     ctx.save();
+            //     ctx.translate(tile.x, tile.y);
+            //     this.renderer.TILESET.drawTexture(ctx, 'skull');
+            //     ctx.restore();
+            // }
         });
     }
 

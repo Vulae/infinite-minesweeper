@@ -18,7 +18,7 @@ const WorldTileGenerators: TileGenerators = {
         return new TileBiomeVanilla(x, y, random.bool(0.2));
     },
     chocolate: function (x, y, random) {
-        return new TileBiomeChocolate(x, y, random.bool(0.25));
+        return new TileBiomeChocolate(x, y, random.bool(0.3));
     },
     strawberry: function (x, y, random) {
         if (random.float() < 0.25) {
@@ -41,7 +41,7 @@ const WorldTileGenerators: TileGenerators = {
         return new TileBiomeBlueberry(
             x,
             y,
-            random.bool(0.4) ? mapRangeInt(random.float(), 0, 1, 1, 3) : 0
+            random.bool(0.25) ? mapRangeInt(random.float(), 0, 1, 1, 3) : 0
         );
     },
     waffle: function (x, y) {
@@ -56,7 +56,7 @@ const WorldTileGenerators: TileGenerators = {
         return new TileBiomeCookiesAndCream(
             x,
             y,
-            random.bool(0.2)
+            random.bool(0.25)
                 ? random.bool()
                     ? TileCookiesAndCreamMine.Mine
                     : TileCookiesAndCreamMine.AntiMine

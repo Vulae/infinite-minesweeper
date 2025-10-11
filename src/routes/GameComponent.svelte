@@ -4,11 +4,15 @@
     import { onMount } from 'svelte';
     import Controller from './Controller.svelte';
     import { Viewport } from '$lib/game/viewport';
+    import Modal from './Modal.svelte';
+    import ImageDataView from './ImageDataView.svelte';
 
     let {
-        game
+        game,
+        beginScreenshot = $bindable()
     }: {
         game: Game;
+        beginScreenshot: () => void;
     } = $props();
 
     let tilesetLoaded: boolean = false;
@@ -22,15 +26,29 @@
 
     let animationFrame: number = -1;
 
+    let screenshotState:
+        | {
+              state: 'none';
+          }
+        | {
+              state: 'capture_pos1';
+          }
+        | {
+              state: 'capture_pos2';
+              x: number;
+              y: number;
+          }
+        | {
+              state: 'view';
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+          } = $state({ state: 'none' });
+
     $effect(() => {
         renderer.worldRenderer.setCanvas(worldCanvas);
-    });
-
-    $effect(() => {
         renderer.particleRenderer.setCanvas(particleCanvas);
-    });
-
-    $effect(() => {
         renderer.overlayRenderer.setCanvas(overlayCanvas);
     });
 
@@ -59,22 +77,33 @@
 
     onMount(() => {
         console.log(game, renderer);
+
+        beginScreenshot = () => {
+            if (screenshotState.state == 'none') {
+                screenshotState = { state: 'capture_pos1' };
+            }
+        };
+
         renderer.TILESET.awaitLoad().then(() => {
             tilesetLoaded = true;
             renderer.setNeedsRerender();
         });
+
         cancelAnimationFrame(animationFrame);
         animationFrame = requestAnimationFrame(() => render());
+
         return () => {
+            beginScreenshot = () => {};
+
             cancelAnimationFrame(animationFrame);
             renderer.worldRenderer.setCanvas(null);
         };
     });
 </script>
 
-<div class="h-screen w-full">
+<div class="force-overlap h-screen w-full">
     <Controller
-        class="grid h-full w-full grid-cols-1 grid-rows-1"
+        class="force-overlap h-full w-full"
         oncontrollermove={(_x, _y, dx, dy) => {
             renderer.viewport.translate(worldCanvas, dx, dy);
             renderer.setNeedsRerender();
@@ -91,8 +120,38 @@
             renderer.setNeedsRerender();
         }}
         oncontrollerinput={(x, y, button) => {
-            if (renderer.worldRenderer.isLowres()) return;
             const worldPos = renderer.viewport.canvasPos(worldCanvas, x, y, true);
+
+            switch (screenshotState.state) {
+                case 'none':
+                    break;
+                case 'capture_pos1': {
+                    if (button == 'primary') {
+                        screenshotState = { state: 'capture_pos2', x: worldPos.x, y: worldPos.y };
+                    }
+                    return;
+                }
+                case 'capture_pos2': {
+                    if (button == 'primary') {
+                        const sx = Math.min(screenshotState.x, worldPos.x);
+                        const sy = Math.min(screenshotState.y, worldPos.y);
+                        const ex = Math.max(screenshotState.x, worldPos.x);
+                        const ey = Math.max(screenshotState.y, worldPos.y);
+                        screenshotState = {
+                            state: 'view',
+                            x: sx,
+                            y: sy,
+                            width: Math.max(ex - sx + 1, 1),
+                            height: Math.max(ey - sy + 1, 1)
+                        };
+                    }
+                    return;
+                }
+                case 'view':
+                    return;
+            }
+
+            if (renderer.worldRenderer.isLowres()) return;
             switch (button) {
                 case 'primary':
                     game.world.revealTile(worldPos.x, worldPos.y);
@@ -104,6 +163,14 @@
             renderer.worldRenderer.setNeedsRerender();
         }}
         oncontrollerhover={(pos) => {
+            if (screenshotState.state != 'none') {
+                if (renderer.overlayRenderer.hoverTile != null) {
+                    renderer.overlayRenderer.hoverTile = null;
+                    renderer.overlayRenderer.setNeedsRerender();
+                }
+                return;
+            }
+
             if (renderer.worldRenderer.isLowres()) {
                 if (renderer.overlayRenderer.hoverTile != null) {
                     renderer.overlayRenderer.hoverTile = null;
@@ -131,17 +198,24 @@
             }
         }}
     >
-        <canvas
-            bind:this={worldCanvas}
-            class="col-start-1 col-end-1 row-start-1 row-end-1 h-full w-full"
-        ></canvas>
-        <canvas
-            bind:this={particleCanvas}
-            class="col-start-1 col-end-1 row-start-1 row-end-1 h-full w-full"
-        ></canvas>
-        <canvas
-            bind:this={overlayCanvas}
-            class="col-start-1 col-end-1 row-start-1 row-end-1 h-full w-full"
-        ></canvas>
+        <canvas bind:this={worldCanvas}></canvas>
+        <canvas bind:this={particleCanvas}></canvas>
+        <canvas bind:this={overlayCanvas}></canvas>
     </Controller>
+    {#if screenshotState.state == 'view'}
+        {@const screenshot = renderer.screenshot({
+            ...screenshotState,
+            hover: { x: renderer.viewport.x, y: renderer.viewport.y }
+        })}
+        <div class="z-100">
+            <Modal
+                onclose={() => (screenshotState = { state: 'none' })}
+                class="flex items-center justify-center p-8"
+            >
+                <div class="rounded-lg bg-white/50 p-4">
+                    <ImageDataView image={screenshot} class="max-h-[90vh] max-w-[90vw]" />
+                </div>
+            </Modal>
+        </div>
+    {/if}
 </div>

@@ -3,6 +3,7 @@ import { ParticleDeathTile } from './particles/deathTile';
 import { ParticleRevealTile } from './particles/revealTile';
 import { ParticleUnflagTile } from './particles/unflagTile';
 import type { Renderer } from './renderer';
+import type { EventListener } from '$lib/eventDispatcher';
 
 export interface Particle {
     /**
@@ -17,22 +18,30 @@ export class ParticleRenderer {
     private readonly renderer: Renderer;
     private needsRerender: boolean = true;
 
+    private readonly listeners: EventListener[] = [];
+
     public constructor(renderer: Renderer) {
         this.renderer = renderer;
-        this.renderer.game.world.addEventListener('reveal', ({ data: { tile } }) => {
-            this.addParticle(new ParticleRevealTile(tile));
-        });
-        this.renderer.game.world.addEventListener(
-            'flag',
-            ({ data: { tile, previousFlagCount } }) => {
-                if (previousFlagCount != 0 && tile.numFlags() == 0) {
-                    this.addParticle(new ParticleUnflagTile(tile));
+        this.listeners.push(
+            this.renderer.game.world.addEventListener('reveal', ({ data: { tile } }) => {
+                this.addParticle(new ParticleRevealTile(tile));
+            }),
+            this.renderer.game.world.addEventListener(
+                'flag',
+                ({ data: { tile, previousFlagCount } }) => {
+                    if (previousFlagCount != 0 && tile.numFlags() == 0) {
+                        this.addParticle(new ParticleUnflagTile(tile));
+                    }
                 }
-            }
+            ),
+            this.renderer.game.world.addEventListener('death', ({ data: { tile } }) => {
+                this.addParticle(new ParticleDeathTile(tile));
+            })
         );
-        this.renderer.game.world.addEventListener('death', ({ data: { tile } }) => {
-            this.addParticle(new ParticleDeathTile(tile));
-        });
+    }
+
+    public destroyListeners(): void {
+        this.listeners.forEach((listener) => listener.destroy());
     }
 
     private store: CanvasStore = new CanvasStore();

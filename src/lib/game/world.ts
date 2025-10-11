@@ -1,5 +1,4 @@
 import { EventDispatcher } from '$lib/eventDispatcher';
-import { spiralIter } from '$lib/util';
 import { TileBiomeCookiesAndCream } from './biomes/cookiesAndCream';
 import { WorldGenerator } from './generator';
 import type { Tile } from './tile';
@@ -9,20 +8,10 @@ export const NEARBY_NONE: symbol = Symbol('NEARBY_NONE');
 const CHUNK_SIZE: number = 32;
 
 class Chunk {
-    private readonly locks: boolean[] = new Array(CHUNK_SIZE * CHUNK_SIZE).fill(false);
-
     private readonly tiles: Tile[] = [];
 
     public getTile(x: number, y: number): Tile {
         return this.tiles[y * CHUNK_SIZE + x];
-    }
-
-    public lockTile(x: number, y: number): void {
-        this.locks[y * CHUNK_SIZE + x] = true;
-    }
-
-    public isLocked(x: number, y: number): boolean {
-        return this.locks[y * CHUNK_SIZE + x];
     }
 
     public static generate(chunkX: number, chunkY: number, generator: WorldGenerator): Chunk {
@@ -37,12 +26,14 @@ class Chunk {
                 chunk.tiles[dy * CHUNK_SIZE + dx] = generator.generateTile(x, y);
             }
         }
-        console.log('Generated chunk', chunkX, chunkY, chunk);
+        // console.info('Generated chunk', chunkX, chunkY, chunk);
         return chunk;
     }
 }
 
 type ChunkPos = `${number},${number}`;
+
+type TilePos = `${number},${number}`;
 
 export class World extends EventDispatcher<{
     change: { x: number; y: number };
@@ -87,22 +78,14 @@ export class World extends EventDispatcher<{
         return chunk.getTile(tileX, tileY);
     }
 
+    public readonly deaths: Set<TilePos> = new Set();
+
     public isTileLocked(x: number, y: number): boolean {
-        const chunkX = Math.floor(x / CHUNK_SIZE);
-        const chunkY = Math.floor(y / CHUNK_SIZE);
-        const tileX = x - chunkX * CHUNK_SIZE;
-        const tileY = y - chunkY * CHUNK_SIZE;
-        const chunk = this.getChunk(chunkX, chunkY);
-        return chunk.isLocked(tileX, tileY);
+        return this.deaths.has(`${x},${y}`);
     }
 
     public lockTile(x: number, y: number): void {
-        const chunkX = Math.floor(x / CHUNK_SIZE);
-        const chunkY = Math.floor(y / CHUNK_SIZE);
-        const tileX = x - chunkX * CHUNK_SIZE;
-        const tileY = y - chunkY * CHUNK_SIZE;
-        const chunk = this.getChunk(chunkX, chunkY);
-        chunk.lockTile(tileX, tileY);
+        this.deaths.add(`${x},${y}`);
     }
 
     public *iterPattern(x: number, y: number, pattern: [number, number][]): Iterable<Tile> {
@@ -193,18 +176,5 @@ export class World extends EventDispatcher<{
 
         this.dispatchEvent('change', { x, y });
         this.dispatchEvent('flag', { tile, previousFlagCount });
-    }
-
-    public constructor() {
-        super();
-
-        // Auto-reveal nearest tile to (0, 0) that has 0 nearby mines.
-        for (const { x, y } of spiralIter(0, 0)) {
-            const tile = this.getTile(x, y);
-            if (tile.numMines() == 0 && tile.getNearbyMines(this) == NEARBY_NONE) {
-                this.revealTile(x, y);
-                break;
-            }
-        }
     }
 }

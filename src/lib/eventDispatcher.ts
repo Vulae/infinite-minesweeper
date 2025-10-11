@@ -16,13 +16,60 @@ type Event<M extends EventMap, K extends keyof M> = {
     readonly stopPropagation: () => void;
 };
 
-export type EventListener<M extends EventMap, K extends keyof M> = {
+class EventListenerInner<M extends EventMap, K extends keyof M> {
+    readonly dispatcher: EventDispatcher<M>;
     readonly key: K;
     readonly callbackfn: (event: Event<M, K>) => unknown;
     readonly priority: number;
     readonly id: number;
     readonly once: boolean;
-};
+    public constructor(
+        dispatcher: EventDispatcher<M>,
+        key: K,
+        callbackfn: (event: Event<M, K>) => unknown,
+        priority: number,
+        id: number,
+        once: boolean
+    ) {
+        this.dispatcher = dispatcher;
+        this.key = key;
+        this.callbackfn = callbackfn;
+        this.priority = priority;
+        this.id = id;
+        this.once = once;
+    }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class EventListener<M extends EventMap = any, K extends keyof M = any> {
+    private readonly inner: EventListenerInner<M, K>;
+    public constructor(inner: EventListenerInner<M, K>) {
+        this.inner = inner;
+    }
+
+    public get dispatcher(): EventDispatcher<M> {
+        return this.inner.dispatcher;
+    }
+    public get key(): K {
+        return this.inner.key;
+    }
+    public get callbackfn(): (event: Event<M, K>) => unknown {
+        return this.inner.callbackfn;
+    }
+    public get priority(): number {
+        return this.inner.priority;
+    }
+    public get id(): number {
+        return this.inner.id;
+    }
+    public get once(): boolean {
+        return this.inner.once;
+    }
+
+    public destroy(): boolean {
+        return this.inner.dispatcher.removeEventListener(this);
+    }
+}
 
 /**
  * ```TypeScript
@@ -96,13 +143,9 @@ export abstract class EventDispatcher<M extends EventMap> {
 
         const listeners = this.getListenersArr(key);
 
-        const listener: EventListener<M, K> = {
-            key: key,
-            callbackfn,
-            priority,
-            id: getId(),
-            once
-        };
+        const listener: EventListener<M, K> = new EventListener(
+            new EventListenerInner(this, key, callbackfn, priority, getId(), once)
+        );
 
         listeners.push(listener);
         listeners.sort((a, b) => a.priority - b.priority);
