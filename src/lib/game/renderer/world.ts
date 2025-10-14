@@ -3,7 +3,11 @@ import type { Tile } from '../tile';
 import { NEARBY_NONE } from '../world';
 import type { Renderer } from './renderer';
 import type { EventListener } from '$lib/eventDispatcher';
-import { RENDERER_WORLD_HIGHRES_CHUNK_SIZE, RENDERER_WORLD_LOWRES_CHUNK_SIZE } from '../consts';
+import {
+    RENDERER_WORLD_HIGHRES_CHUNK_SIZE,
+    RENDERER_WORLD_LOWRES_CHUNK_SIZE
+    // WORLD_GENERATION_CHUNK_SIZE
+} from '../consts';
 
 type ChunkPos = `${number},${number}`;
 
@@ -355,6 +359,8 @@ export class WorldRenderer {
         // this.__render_debug_chunk_overlay(
         //     !this.isLowres() ? this.highresRenderer.CHUNK_SIZE : this.lowresRenderer.CHUNK_SIZE
         // );
+
+        // this.__render_debug_chunk_overlay(WORLD_GENERATION_CHUNK_SIZE);
     }
 
     private renderNearbyNumber(ctx: CanvasRenderingContext2D, n: number) {

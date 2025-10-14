@@ -9,6 +9,7 @@
         LucideChevronRight,
         LucideImage,
         LucideInfo,
+        LucideSave,
         LucideSettings,
         LucideSkull
     } from '@lucide/svelte';
@@ -46,7 +47,7 @@
         };
     });
 
-    let tabVisible: 'none' | 'info' | 'settings' = $state('info');
+    let tabVisible: 'none' | 'info' | 'settings' = $state('none');
 
     const infoTabBiomes: {
         name: string;
@@ -181,6 +182,17 @@
                 <button class="cursor-pointer" title="Screenshot" onclick={() => beginScreenshot()}>
                     <LucideImage />
                 </button>
+                <!-- <button
+                    class="cursor-pointer"
+                    title="Save"
+                    onclick={() => {
+                        if (game) {
+                            game.saveManager.save();
+                        }
+                    }}
+                >
+                    <LucideSave />
+                </button> -->
                 <div class="h-0.5 w-full rounded-full bg-white"></div>
                 <div class="flex flex-col items-center justify-center" title="Deaths">
                     <LucideSkull />

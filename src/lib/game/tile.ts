@@ -1,3 +1,4 @@
+import type { BitReader, BitWriter } from '$lib/io';
 import type { Renderer } from './renderer/renderer';
 import { NEARBY_NONE, type World } from './world';
 
@@ -69,6 +70,9 @@ export abstract class Tile {
      * @returns This tile's final flag texture
      */
     public abstract tileFinalFlagTexture(): keyof Renderer['TILESET']['textures'];
+
+    public abstract save(writer: BitWriter): void;
+    public abstract load(reader: BitReader): void;
 }
 
 export const BASIC_PATTERN: [number, number][] = [
@@ -153,5 +157,36 @@ export abstract class TileBasicSingularMine extends Tile {
 
     public tileFinalFlagTexture(): keyof Renderer['TILESET']['textures'] {
         return 'flag';
+    }
+
+    public save(writer: BitWriter): void {
+        switch (this._state) {
+            case TileBasicSingularMineState.Covered: {
+                writer.write_bit(false);
+                break;
+            }
+            case TileBasicSingularMineState.Flagged: {
+                writer.write_bit(true);
+                writer.write_bit(true);
+                break;
+            }
+            case TileBasicSingularMineState.Revealed: {
+                writer.write_bit(true);
+                writer.write_bit(false);
+                break;
+            }
+        }
+    }
+
+    public load(reader: BitReader): void {
+        if (!reader.read_bit()) {
+            this._state = TileBasicSingularMineState.Covered;
+        } else {
+            if (reader.read_bit()) {
+                this._state = TileBasicSingularMineState.Flagged;
+            } else {
+                this._state = TileBasicSingularMineState.Revealed;
+            }
+        }
     }
 }

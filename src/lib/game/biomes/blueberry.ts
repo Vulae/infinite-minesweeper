@@ -1,3 +1,4 @@
+import type { BitReader, BitWriter } from '$lib/io';
 import type { Renderer } from '../renderer/renderer';
 import { BASIC_PATTERN, Tile } from '../tile';
 
@@ -75,5 +76,30 @@ export class TileBiomeBlueberry extends Tile {
 
     public tileFinalFlagTexture(): keyof Renderer['TILESET']['textures'] {
         return 'flag_3';
+    }
+
+    public save(writer: BitWriter): void {
+        if (this._numFlags == 0 && !this._isRevealed) {
+            writer.write_bit(false);
+            return;
+        }
+        writer.write_bit(true);
+        writer.write_num(3, this._isRevealed ? 3 : this._numFlags - 1);
+    }
+
+    public load(reader: BitReader): void {
+        if (!reader.read_bit()) {
+            this._numFlags = 0;
+            this._isRevealed = false;
+            return;
+        }
+        const state = reader.read_num(3);
+        if (state < 3) {
+            this._numFlags = state + 1;
+            this._isRevealed = false;
+        } else {
+            this._numFlags = 0;
+            this._isRevealed = true;
+        }
     }
 }

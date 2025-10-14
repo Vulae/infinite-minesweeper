@@ -129,9 +129,17 @@
 
             cancelAnimationFrame(animationFrame);
             renderer.worldRenderer.setCanvas(null);
+
+            game.saveManager.save();
         };
     });
 </script>
+
+<svelte:window
+    onbeforeunload={() => {
+        game.saveManager.save();
+    }}
+/>
 
 <div class="force-overlap h-screen w-full">
     <Controller

@@ -1,3 +1,4 @@
+import type { BitReader, BitWriter } from '$lib/io';
 import type { Renderer } from '../renderer/renderer';
 import { BASIC_PATTERN, Tile } from '../tile';
 
@@ -118,5 +119,47 @@ export class TileBiomeCookiesAndCream extends Tile {
 
     public tileFinalFlagTexture(): keyof Renderer['TILESET']['textures'] {
         return 'flag_inversed';
+    }
+
+    public save(writer: BitWriter): void {
+        switch (this._state) {
+            case TileCookiesAndCreamState.Covered: {
+                writer.write_bit(false);
+                break;
+            }
+            case TileCookiesAndCreamState.Revealed: {
+                writer.write_bit(true);
+                writer.write_bit(false);
+                break;
+            }
+            case TileCookiesAndCreamState.AntiFlagged: {
+                writer.write_bit(true);
+                writer.write_bit(true);
+                writer.write_bit(false);
+                break;
+            }
+            case TileCookiesAndCreamState.Flagged: {
+                writer.write_bit(true);
+                writer.write_bit(true);
+                writer.write_bit(true);
+                break;
+            }
+        }
+    }
+
+    public load(reader: BitReader): void {
+        if (!reader.read_bit()) {
+            this._state = TileCookiesAndCreamState.Covered;
+            return;
+        }
+        if (!reader.read_bit()) {
+            this._state = TileCookiesAndCreamState.Revealed;
+            return;
+        }
+        if (!reader.read_bit()) {
+            this._state = TileCookiesAndCreamState.AntiFlagged;
+        } else {
+            this._state = TileCookiesAndCreamState.Flagged;
+        }
     }
 }

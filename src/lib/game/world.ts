@@ -1,4 +1,5 @@
 import { EventDispatcher } from '$lib/eventDispatcher';
+import { BitReader, BitWriter, DataReader, type DataWriter } from '$lib/io';
 import { TileBiomeCookiesAndCream } from './biomes/cookiesAndCream';
 import { WORLD_GENERATION_CHUNK_SIZE } from './consts';
 import { WorldGenerator } from './generator';
@@ -9,6 +10,14 @@ export const NEARBY_NONE: symbol = Symbol('NEARBY_NONE');
 const CHUNK_SIZE: number = WORLD_GENERATION_CHUNK_SIZE;
 
 class Chunk {
+    public readonly chunkX: number;
+    public readonly chunkY: number;
+
+    private constructor(chunkX: number, chunkY: number) {
+        this.chunkX = chunkX;
+        this.chunkY = chunkY;
+    }
+
     private readonly tiles: Tile[] = [];
 
     public getTile(x: number, y: number): Tile {
@@ -19,7 +28,7 @@ class Chunk {
         if (!Number.isInteger(chunkX) || !Number.isInteger(chunkY)) {
             throw new Error(`Invalid chunk pos: ${chunkX}, ${chunkY}`);
         }
-        const chunk = new Chunk();
+        const chunk = new Chunk(chunkX, chunkY);
         for (let dy = 0; dy < CHUNK_SIZE; dy++) {
             for (let dx = 0; dx < CHUNK_SIZE; dx++) {
                 const x = chunkX * CHUNK_SIZE + dx;
@@ -28,6 +37,36 @@ class Chunk {
             }
         }
         // console.info('Generated chunk', chunkX, chunkY, chunk);
+        return chunk;
+    }
+
+    public save(writer: DataWriter): void {
+        writer.write_int(this.chunkX);
+        writer.write_int(this.chunkY);
+
+        const bitWriter = new BitWriter();
+        this.tiles.forEach((tile) => {
+            tile.save(bitWriter);
+        });
+        const data = bitWriter.final();
+
+        writer.write_int(data.byteLength);
+        writer.write(new Uint8Array(data));
+    }
+
+    public static load(reader: DataReader, generator: WorldGenerator): Chunk {
+        const chunkX = reader.read_int();
+        const chunkY = reader.read_int();
+
+        const chunk = Chunk.generate(chunkX, chunkY, generator);
+
+        const data = reader.read(reader.read_int());
+        const bitReader = new BitReader(data.buffer as ArrayBuffer);
+
+        chunk.tiles.forEach((tile) => {
+            tile.load(bitReader);
+        });
+
         return chunk;
     }
 }
@@ -42,11 +81,24 @@ export class World extends EventDispatcher<{
     reveal: { tile: Tile };
     flag: { tile: Tile; previousFlagCount: number };
 }> {
-    public readonly generator: WorldGenerator = new WorldGenerator(
-        Math.floor(Math.random() * 4294967296)
-    );
+    public readonly generator: WorldGenerator;
 
-    private readonly chunks: Map<ChunkPos, Chunk> = new Map();
+    private readonly chunks: Map<ChunkPos, Chunk>;
+
+    private constructor(
+        deaths: Set<ChunkPos> = new Set(),
+        generator: WorldGenerator = new WorldGenerator(Math.floor(Math.random() * 4294967296)),
+        chunks: Map<ChunkPos, Chunk> = new Map()
+    ) {
+        super();
+        this.deaths = deaths;
+        this.generator = generator;
+        this.chunks = chunks;
+    }
+
+    public static new(): World {
+        return new World();
+    }
 
     private getChunk(chunkX: number, chunkY: number): Chunk {
         const key: ChunkPos = `${chunkX},${chunkY}`;
@@ -79,7 +131,7 @@ export class World extends EventDispatcher<{
         return chunk.getTile(tileX, tileY);
     }
 
-    public readonly deaths: Set<TilePos> = new Set();
+    public readonly deaths: Set<TilePos>;
 
     public isTileLocked(x: number, y: number): boolean {
         return this.deaths.has(`${x},${y}`);
@@ -177,5 +229,42 @@ export class World extends EventDispatcher<{
 
         this.dispatchEvent('change', { x, y });
         this.dispatchEvent('flag', { tile, previousFlagCount });
+    }
+
+    public save(writer: DataWriter): void {
+        writer.write_int(this.generator.seed);
+
+        writer.write_int(this.deaths.size);
+        this.deaths.forEach((death) => {
+            const [x, y] = death.split(',').map((s) => Number.parseInt(s));
+            writer.write_int(x);
+            writer.write_int(y);
+        });
+
+        writer.write_int(this.chunks.size);
+        this.chunks.forEach((chunk) => chunk.save(writer));
+    }
+
+    public static load(reader: DataReader): World {
+        const seed = reader.read_int();
+
+        const numDeaths = reader.read_int();
+        const deaths: Set<TilePos> = new Set();
+        for (let i = 0; i < numDeaths; i++) {
+            const deathX = reader.read_int();
+            const deathY = reader.read_int();
+            deaths.add(`${deathX},${deathY}`);
+        }
+
+        const generator = new WorldGenerator(seed);
+
+        const numChunks = reader.read_int();
+        const chunks: Map<ChunkPos, Chunk> = new Map();
+        for (let i = 0; i < numChunks; i++) {
+            const chunk = Chunk.load(reader, generator);
+            chunks.set(`${chunk.chunkX},${chunk.chunkY}`, chunk);
+        }
+
+        return new World(deaths, generator, chunks);
     }
 }
